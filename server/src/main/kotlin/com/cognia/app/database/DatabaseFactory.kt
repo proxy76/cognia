@@ -7,11 +7,14 @@ import java.io.File
 
 object DatabaseFactory {
     fun init(dbPath: String) {
-        // Ensure parent directory exists
-        File(dbPath).parentFile?.mkdirs()
+        // Ensure parent directory exists (skip for in-memory databases)
+        if (!dbPath.contains(":memory:")) {
+            File(dbPath).parentFile?.mkdirs()
+        }
 
+        val separator = if (dbPath.contains("?")) "&" else "?"
         val database = Database.connect(
-            url = "jdbc:sqlite:$dbPath?foreign_keys=on",
+            url = "jdbc:sqlite:$dbPath${separator}foreign_keys=on",
             driver = "org.sqlite.JDBC"
         )
 

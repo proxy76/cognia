@@ -1,11 +1,16 @@
 package com.cognia.app.di
 
+import com.cognia.app.config.AppConfig
+import com.cognia.app.repository.UserRepository
+import com.cognia.app.service.AuthService
 import org.koin.dsl.module
 
 // Empty module stubs for each feature area — will be populated as features are implemented
 
 val authModule = module {
-    // AuthService, AuthRepository, TokenService
+    single { AppConfig.fromEnvironment() }
+    single { UserRepository() }
+    single { AuthService(get(), get()) }
 }
 
 val userModule = module {

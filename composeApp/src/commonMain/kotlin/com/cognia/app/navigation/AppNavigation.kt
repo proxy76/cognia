@@ -7,12 +7,19 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.cognia.app.ui.auth.AuthViewModel
+import com.cognia.app.ui.auth.LoginScreen
+import com.cognia.app.ui.auth.RegisterScreen
+import com.cognia.app.ui.auth.WelcomeScreen
 import com.cognia.app.ui.screens.ChatListScreen
 import com.cognia.app.ui.screens.CreateScreen
 import com.cognia.app.ui.screens.HomeScreen
@@ -27,6 +34,8 @@ fun AppNavigation() {
     val currentRoute = currentBackStackEntry?.destination?.route
 
     val showBottomBar = currentRoute in bottomNavItems.map { it.screen.route }
+
+    val authViewModel: AuthViewModel = viewModel { AuthViewModel() }
 
     Scaffold(
         bottomBar = {
@@ -52,7 +61,7 @@ fun AppNavigation() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = Screen.Welcome.route,
             modifier = Modifier.padding(paddingValues),
         ) {
             // Main tabs
@@ -62,10 +71,70 @@ fun AppNavigation() {
             composable(Screen.Chat.route) { ChatListScreen() }
             composable(Screen.Profile.route) { ProfileScreen() }
 
-            // Auth (placeholder)
-            composable(Screen.Welcome.route) { PlaceholderScreen("Welcome") }
-            composable(Screen.Login.route) { PlaceholderScreen("Login") }
-            composable(Screen.Register.route) { PlaceholderScreen("Register") }
+            // Auth screens
+            composable(Screen.Welcome.route) {
+                WelcomeScreen(
+                    onNavigateToRegister = {
+                        authViewModel.clearState()
+                        navController.navigate(Screen.Register.route)
+                    },
+                    onNavigateToLogin = {
+                        authViewModel.clearState()
+                        navController.navigate(Screen.Login.route)
+                    }
+                )
+            }
+            composable(Screen.Login.route) {
+                val authState by authViewModel.state.collectAsState()
+
+                LaunchedEffect(authState.authSuccess) {
+                    val success = authState.authSuccess
+                    if (success != null && !success.isNewUser) {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
+                        }
+                        authViewModel.clearState()
+                    }
+                }
+
+                LoginScreen(
+                    viewModel = authViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToRegister = {
+                        authViewModel.clearState()
+                        navController.navigate(Screen.Register.route) {
+                            popUpTo(Screen.Welcome.route)
+                        }
+                    }
+                )
+            }
+            composable(Screen.Register.route) {
+                val authState by authViewModel.state.collectAsState()
+
+                LaunchedEffect(authState.authSuccess) {
+                    val success = authState.authSuccess
+                    if (success != null && success.isNewUser) {
+                        navController.navigate(Screen.Onboarding.route) {
+                            popUpTo(Screen.Welcome.route) { inclusive = true }
+                        }
+                        authViewModel.clearState()
+                    }
+                }
+
+                RegisterScreen(
+                    viewModel = authViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToLogin = {
+                        authViewModel.clearState()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.Welcome.route)
+                        }
+                    }
+                )
+            }
+
+            // Onboarding
+            composable(Screen.Onboarding.route) { PlaceholderScreen("Onboarding") }
 
             // Other screens (placeholder)
             composable(Screen.Notifications.route) { PlaceholderScreen("Notifications") }

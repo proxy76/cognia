@@ -36,7 +36,10 @@ dependencies {
     implementation(libs.exposed.dao)
     implementation(libs.exposed.kotlin.datetime)
     implementation(libs.sqlite.jdbc)
+    implementation(libs.jbcrypt)
+    implementation(libs.java.jwt)
     testImplementation(libs.koin.test)
     testImplementation(libs.ktor.serverTestHost)
+    testImplementation(libs.ktor.clientContentNegotiation)
     testImplementation(libs.kotlin.testJunit)
 }
