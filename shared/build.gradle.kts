@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -29,10 +30,28 @@ kotlin {
     
     sourceSets {
         commonMain.dependencies {
-            // put your Multiplatform dependencies here
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.ktor.clientCore)
+            implementation(libs.ktor.clientContentNegotiation)
+            implementation(libs.ktor.clientSerialization)
+            implementation(libs.ktor.clientAuth)
+            implementation(libs.ktor.clientLogging)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+        androidMain.dependencies {
+            implementation(libs.ktor.clientOkhttp)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.clientDarwin)
+        }
+        jsMain.dependencies {
+            implementation(libs.ktor.clientJs)
+        }
+        jvmMain.dependencies {
+            implementation(libs.ktor.clientOkhttp)
         }
     }
 }
