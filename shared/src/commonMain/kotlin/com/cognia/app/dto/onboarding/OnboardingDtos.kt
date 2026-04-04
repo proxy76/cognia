@@ -1,5 +1,6 @@
 package com.cognia.app.dto.onboarding
 
+import com.cognia.app.dto.category.CategoryResponse
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -17,12 +18,15 @@ data class RecommendResponse(
 )
 
 @Serializable
-data class CategoryResponse(val id: String, val name: String, val slug: String)
-
-@Serializable
 data class SavePreferencesRequest(
     val categoryIds: List<String>,
     val selfDescription: String? = null
+)
+
+@Serializable
+data class PreferenceResponse(
+    val categories: List<CategoryResponse>,
+    val selfDescription: String?
 )
 
 @Serializable

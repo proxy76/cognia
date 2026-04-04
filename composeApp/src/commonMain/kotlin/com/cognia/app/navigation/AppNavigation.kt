@@ -23,6 +23,8 @@ import com.cognia.app.ui.auth.WelcomeScreen
 import com.cognia.app.ui.screens.ChatListScreen
 import com.cognia.app.ui.screens.CreateScreen
 import com.cognia.app.ui.screens.HomeScreen
+import com.cognia.app.ui.onboarding.OnboardingScreen
+import com.cognia.app.ui.onboarding.OnboardingViewModel
 import com.cognia.app.ui.screens.PlaceholderScreen
 import com.cognia.app.ui.profile.ProfileScreen
 import com.cognia.app.ui.profile.ProfileViewModel
@@ -138,7 +140,17 @@ fun AppNavigation() {
             }
 
             // Onboarding
-            composable(Screen.Onboarding.route) { PlaceholderScreen("Onboarding") }
+            composable(Screen.Onboarding.route) {
+                val onboardingViewModel: OnboardingViewModel = viewModel { OnboardingViewModel() }
+                OnboardingScreen(
+                    viewModel = onboardingViewModel,
+                    onComplete = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Onboarding.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
 
             // Other screens (placeholder)
             composable(Screen.Notifications.route) { PlaceholderScreen("Notifications") }

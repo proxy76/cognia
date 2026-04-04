@@ -1,6 +1,6 @@
 package com.cognia.app.dto.search
 
-import com.cognia.app.dto.onboarding.CategoryResponse
+import com.cognia.app.dto.category.CategoryResponse
 import com.cognia.app.dto.user.CategorySummary
 import com.cognia.app.dto.user.UserSummary
 import kotlinx.serialization.Serializable

@@ -5,6 +5,8 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import com.cognia.app.config.AppConfig
 import com.cognia.app.plugins.*
+import com.cognia.app.service.CategoryService
+import org.koin.ktor.ext.inject
 
 fun main() {
     val config = AppConfig.fromEnvironment()
@@ -26,4 +28,10 @@ fun Application.module() {
     configureCallLogging()
     configureAuth()
     configureRouting()
+    seedData()
+}
+
+private fun Application.seedData() {
+    val categoryService by inject<CategoryService>()
+    categoryService.seedCategories()
 }
