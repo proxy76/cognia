@@ -32,9 +32,12 @@ import com.cognia.app.dto.social.PendingRequestsResponse
 import com.cognia.app.dto.moderation.*
 import com.cognia.app.dto.gamification.BadgeListResponse
 import com.cognia.app.dto.ai.*
+import com.cognia.app.dto.content.VideoDetailResponse
+import com.cognia.app.dto.content.VideoUploadResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 
@@ -322,6 +325,32 @@ class CogniaApiClient(
                 parameter("offset", offset)
             }
         }
+
+    // ── Video Upload ─────────────────────────────────────────────────
+    suspend fun uploadVideo(
+        title: String,
+        description: String?,
+        categoryId: String,
+        fileBytes: ByteArray,
+        fileName: String
+    ): ApiResult<VideoUploadResponse> =
+        safeCall {
+            client.submitFormWithBinaryData(
+                url = ApiConfig.apiUrl("/videos"),
+                formData = formData {
+                    append("title", title)
+                    if (description != null) append("description", description)
+                    append("categoryId", categoryId)
+                    append("file", fileBytes, Headers.build {
+                        append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
+                        append(HttpHeaders.ContentType, "video/mp4")
+                    })
+                }
+            )
+        }
+
+    suspend fun submitVideoForReview(videoId: String): ApiResult<VideoDetailResponse> =
+        safeCall { client.post(ApiConfig.apiUrl("/videos/$videoId/submit")) }
 
     // ── Internal helpers ────────────────────────────────────────────
     private suspend inline fun <reified T> safeCall(block: () -> HttpResponse): ApiResult<T> {

@@ -42,7 +42,7 @@ class NotificationRepository {
             it[NotificationsTable.body] = body
             it[NotificationsTable.referenceId] = referenceId
             it[NotificationsTable.referenceType] = referenceType
-            it[NotificationsTable.read] = 0
+            it[NotificationsTable.read] = false
             it[NotificationsTable.createdAt] = now
         }
 
@@ -68,7 +68,7 @@ class NotificationRepository {
 
     fun getUnreadCount(userId: String): Int = transaction {
         NotificationsTable.selectAll()
-            .where { (NotificationsTable.userId eq userId) and (NotificationsTable.read eq 0) }
+            .where { (NotificationsTable.userId eq userId) and (NotificationsTable.read eq false) }
             .count()
             .toInt()
     }
@@ -77,16 +77,16 @@ class NotificationRepository {
         val updated = NotificationsTable.update(
             where = { (NotificationsTable.id eq notificationId) and (NotificationsTable.userId eq userId) }
         ) {
-            it[read] = 1
+            it[read] = true
         }
         updated > 0
     }
 
     fun markAllAsRead(userId: String): Int = transaction {
         NotificationsTable.update(
-            where = { (NotificationsTable.userId eq userId) and (NotificationsTable.read eq 0) }
+            where = { (NotificationsTable.userId eq userId) and (NotificationsTable.read eq false) }
         ) {
-            it[read] = 1
+            it[read] = true
         }
     }
 
@@ -105,7 +105,7 @@ class NotificationRepository {
         body = this[NotificationsTable.body],
         referenceId = this[NotificationsTable.referenceId],
         referenceType = this[NotificationsTable.referenceType],
-        read = this[NotificationsTable.read] != 0,
+        read = this[NotificationsTable.read],
         createdAt = this[NotificationsTable.createdAt]
     )
 }

@@ -9,6 +9,7 @@ import com.cognia.app.dto.content.VideoUploadResponse
 import com.cognia.app.service.InvalidStateTransitionException
 import com.cognia.app.service.VideoAccessDeniedException
 import com.cognia.app.service.VideoNotFoundException
+import com.cognia.app.service.VideoProcessingQueue
 import com.cognia.app.service.VideoService
 import io.ktor.http.*
 import io.ktor.http.content.*
@@ -25,11 +26,12 @@ private val ALLOWED_EXTENSIONS = setOf("mp4", "mov", "avi", "mkv", "webm")
 fun Route.videoRoutes() {
     val videoService by application.inject<VideoService>()
     val appConfig by application.inject<AppConfig>()
+    val processingQueue by application.inject<VideoProcessingQueue>()
 
     route("/api/v1/videos") {
         authenticate("auth-jwt") {
-            // POST / — multipart upload (creators only)
-            authorize("REGULAR_CREATOR", "LICENSED_CREATOR") {
+            // POST / — multipart upload (any authenticated user)
+            authorize("LEARNER", "REGULAR_CREATOR", "LICENSED_CREATOR", "ADMIN") {
                 post {
                     val principal = call.principal<UserPrincipal>()
                         ?: return@post call.respond(HttpStatusCode.Unauthorized, ErrorBody("Not authenticated"))
@@ -94,6 +96,12 @@ fun Route.videoRoutes() {
                             categoryId = categoryId,
                             rawFilePath = filePath
                         )
+
+                        // Enqueue video processing if a file was uploaded
+                        val savedFilePath = filePath
+                        if (savedFilePath != null) {
+                            processingQueue.enqueue(video.id, savedFilePath)
+                        }
 
                         call.respond(HttpStatusCode.Created, VideoUploadResponse(
                             id = video.id,

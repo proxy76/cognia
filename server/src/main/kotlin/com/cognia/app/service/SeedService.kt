@@ -16,12 +16,16 @@ import kotlinx.datetime.toLocalDateTime
 class SeedService {
 
     fun seedDevData() {
+        // Ensure admin account always has the correct password
+        ensureAdminPassword()
+
         // Only seed if no users exist yet
         val userCount = transaction { UsersTable.selectAll().count() }
         if (userCount > 0L) return
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC).toString()
         val passwordHash = BCrypt.hashpw("password123", BCrypt.gensalt())
+        val adminPasswordHash = BCrypt.hashpw("admin", BCrypt.gensalt())
 
         // ── Users ──────────────────────────────────────────────────
         val adminId = "seed-admin-001"
@@ -45,7 +49,7 @@ class SeedService {
                 UsersTable.insert {
                     it[id] = user.id
                     it[email] = user.email
-                    it[UsersTable.passwordHash] = passwordHash
+                    it[UsersTable.passwordHash] = if (user.role == "ADMIN") adminPasswordHash else passwordHash
                     it[displayName] = user.displayName
                     it[role] = user.role
                     it[authProvider] = "EMAIL"
@@ -325,7 +329,7 @@ class SeedService {
                     it[NotificationsTable.body] = body
                     it[referenceId] = null
                     it[referenceType] = null
-                    it[read] = 0
+                    it[read] = false
                     it[createdAt] = now
                 }
             }
@@ -359,6 +363,21 @@ class SeedService {
         }
 
         println("SeedService: Development data seeded successfully (${users.size} users, ${videos.size} videos, ${quizzes.size} quizzes)")
+    }
+
+    private fun ensureAdminPassword() {
+        transaction {
+            val admin = UsersTable.selectAll()
+                .where { UsersTable.email eq "admin@cognia.dev" }
+                .firstOrNull() ?: return@transaction
+
+            val currentHash = admin[UsersTable.passwordHash]
+            if (!BCrypt.checkpw("admin", currentHash)) {
+                UsersTable.update({ UsersTable.email eq "admin@cognia.dev" }) {
+                    it[passwordHash] = BCrypt.hashpw("admin", BCrypt.gensalt())
+                }
+            }
+        }
     }
 
     private data class SeedUser(

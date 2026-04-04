@@ -134,7 +134,7 @@ class SearchService {
                 (UsersTable.displayName.lowerCase() like likePattern.lowercase()) and
                     (UsersTable.role inList listOf("REGULAR_CREATOR", "LICENSED_CREATOR", "ADMIN"))
             }
-            .groupBy(UsersTable.id)
+            .groupBy(UsersTable.id, UsersTable.displayName, UsersTable.avatarUrl)
             .limit(limit)
             .offset(offset)
             .map { row ->

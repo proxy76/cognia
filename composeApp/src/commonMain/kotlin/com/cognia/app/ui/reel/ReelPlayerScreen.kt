@@ -227,8 +227,162 @@ fun ReelPlayerScreen(
 }
 
 @Composable
+<<<<<<< Updated upstream
 private fun ActionButton(
     icon: @Composable () -> Unit,
+=======
+private fun CreatorOverlay(
+    creatorName: String,
+    onCreatorClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = Color.Black.copy(alpha = 0.4f),
+        modifier = modifier
+            .clickable(onClick = onCreatorClick)
+            .widthIn(max = 180.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+        ) {
+            Text(
+                text = "@$creatorName",
+                style = MaterialTheme.typography.titleSmall,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = "Creator",
+                style = MaterialTheme.typography.labelSmall,
+                color = NeonPurple.copy(alpha = 0.7f),
+                fontWeight = FontWeight.Normal,
+            )
+        }
+    }
+}
+
+// ── Video Content (shared between mobile & desktop) ─────────────────
+
+@Composable
+private fun VideoContent(
+    state: ReelUiState,
+    currentVideo: VideoItem,
+    onSwipeNext: () -> Unit,
+    onSwipePrevious: () -> Unit,
+    onTogglePlayPause: () -> Unit,
+    showCreatorOverlay: Boolean,
+    showBackButton: Boolean,
+    showPageIndicator: Boolean,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .pointerInput(Unit) {
+                detectVerticalDragGestures { _, dragAmount ->
+                    if (dragAmount < -50) onSwipeNext()
+                    else if (dragAmount > 50) onSwipePrevious()
+                }
+            }
+            .pointerInput(Unit) {
+                detectTapGestures { onTogglePlayPause() }
+            }
+    ) {
+        // Video player or placeholder
+        val videoUrl = currentVideo.videoUrl
+        if (videoUrl != null) {
+            com.cognia.app.platform.VideoPlayer(
+                url = videoUrl,
+                isPlaying = state.isPlaying,
+                onBuffering = { /* handled by viewmodel */ },
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            // Fallback gradient when no video URL is available
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF080812),
+                                NeonViolet.copy(alpha = 0.08f),
+                                NeonPurpleDark.copy(alpha = 0.05f),
+                                Color(0xFF080812),
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = currentVideo.title,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = NeonPurple.copy(alpha = 0.08f),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(32.dp)
+                )
+            }
+        }
+
+        // Top scrim for readability
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .align(Alignment.TopCenter)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            VideoScrimTop,
+                            Color.Transparent,
+                        )
+                    )
+                )
+        )
+
+        // Play/Pause indicator (only show when no native player)
+        if (!state.isPlaying && currentVideo.videoUrl == null) {
+            Surface(
+                shape = CircleShape,
+                color = Color.Black.copy(alpha = 0.45f),
+                modifier = Modifier
+                    .size(68.dp)
+                    .align(Alignment.Center),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = "Paused",
+                        tint = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.size(36.dp),
+                    )
+                }
+            }
+        }
+
+        // Buffering
+        if (state.isBuffering) {
+            CircularProgressIndicator(
+                color = NeonPurple,
+                strokeWidth = 3.dp,
+                modifier = Modifier
+                    .size(40.dp)
+                    .align(Alignment.Center)
+            )
+        }
+    }
+}
+
+// ── Mobile Action Button ────────────────────────────────────────────
+
+@Composable
+private fun MobileActionButton(
+    icon: ImageVector,
+>>>>>>> Stashed changes
     label: String,
     onClick: () -> Unit
 ) {

@@ -1,9 +1,10 @@
 package com.cognia.app.plugins
 
+import com.cognia.app.config.DatabaseConfig
 import com.cognia.app.database.DatabaseFactory
 import io.ktor.server.application.*
 
 fun Application.configureDatabase() {
-    val dbPath = System.getenv("COGNIA_DB_PATH") ?: "./data/cognia-dev.db"
-    DatabaseFactory.init(dbPath)
+    val config = DatabaseConfig.fromEnvironment()
+    DatabaseFactory.init(config)
 }

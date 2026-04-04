@@ -37,11 +37,19 @@ data class ServerConfig(
 }
 
 data class DatabaseConfig(
-    val path: String
+    val url: String,
+    val driver: String,
+    val user: String,
+    val password: String,
+    val maxPoolSize: Int
 ) {
     companion object {
         fun fromEnvironment() = DatabaseConfig(
-            path = System.getenv("COGNIA_DB_PATH") ?: "./data/cognia-dev.db"
+            url = System.getenv("COGNIA_DB_URL") ?: "jdbc:postgresql://localhost:5432/cognia",
+            driver = System.getenv("COGNIA_DB_DRIVER") ?: "org.postgresql.Driver",
+            user = System.getenv("COGNIA_DB_USER") ?: "cognia",
+            password = System.getenv("COGNIA_DB_PASSWORD") ?: "cognia",
+            maxPoolSize = System.getenv("COGNIA_DB_MAX_POOL_SIZE")?.toIntOrNull() ?: 10
         )
     }
 }

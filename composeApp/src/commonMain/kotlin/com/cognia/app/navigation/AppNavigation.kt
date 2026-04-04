@@ -70,8 +70,183 @@ fun AppNavigation() {
                                     launchSingleTop = true
                                     restoreState = true
                                 }
+<<<<<<< Updated upstream
                             },
                         )
+=======
+                            )
+                        }
+                        composable(Screen.Search.route) { SearchScreenContent() }
+                        composable(Screen.Create.route) { CreateScreen() }
+                        composable(Screen.Chat.route) {
+                            val chatListViewModel: ChatListViewModel = viewModel { ChatListViewModel() }
+                            ChatListScreenNew(
+                                viewModel = chatListViewModel,
+                                onConversationClick = { conversationId ->
+                                    navController.navigate(Screen.ChatConversation.createRoute(conversationId))
+                                }
+                            )
+                        }
+                        composable(Screen.Profile.route) {
+                            val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel() }
+                            ProfileScreen(viewModel = profileViewModel)
+                        }
+
+                        // Auth screens
+                        composable(Screen.Welcome.route) {
+                            val authState by authViewModel.state.collectAsState()
+
+                            LaunchedEffect(authState.moderatorLoginSuccess) {
+                                if (authState.moderatorLoginSuccess) {
+                                    navController.navigate(Screen.ModerationDashboard.route) {
+                                        popUpTo(Screen.Welcome.route) { inclusive = true }
+                                    }
+                                    authViewModel.clearState()
+                                }
+                            }
+
+                            WelcomeScreen(
+                                onNavigateToRegister = {
+                                    authViewModel.clearState()
+                                    navController.navigate(Screen.Register.route)
+                                },
+                                onNavigateToLogin = {
+                                    authViewModel.clearState()
+                                    navController.navigate(Screen.Login.route)
+                                },
+                                onModeratorLogin = {
+                                    authViewModel.loginAsModerator()
+                                }
+                            )
+                        }
+                        composable(Screen.Login.route) {
+                            val authState by authViewModel.state.collectAsState()
+
+                            LaunchedEffect(authState.authSuccess) {
+                                val success = authState.authSuccess
+                                if (success != null && !success.isNewUser) {
+                                    navController.navigate(Screen.Home.route) {
+                                        popUpTo(Screen.Welcome.route) { inclusive = true }
+                                    }
+                                    authViewModel.clearState()
+                                }
+                            }
+
+                            LoginScreen(
+                                viewModel = authViewModel,
+                                onNavigateBack = { navController.popBackStack() },
+                                onNavigateToRegister = {
+                                    authViewModel.clearState()
+                                    navController.navigate(Screen.Register.route) {
+                                        popUpTo(Screen.Welcome.route)
+                                    }
+                                }
+                            )
+                        }
+                        composable(Screen.Register.route) {
+                            val authState by authViewModel.state.collectAsState()
+
+                            LaunchedEffect(authState.authSuccess) {
+                                val success = authState.authSuccess
+                                if (success != null && success.isNewUser) {
+                                    navController.navigate(Screen.Onboarding.route) {
+                                        popUpTo(Screen.Welcome.route) { inclusive = true }
+                                    }
+                                    authViewModel.clearState()
+                                }
+                            }
+
+                            RegisterScreen(
+                                viewModel = authViewModel,
+                                onNavigateBack = { navController.popBackStack() },
+                                onNavigateToLogin = {
+                                    authViewModel.clearState()
+                                    navController.navigate(Screen.Login.route) {
+                                        popUpTo(Screen.Welcome.route)
+                                    }
+                                }
+                            )
+                        }
+
+                        // Onboarding
+                        composable(Screen.Onboarding.route) {
+                            val onboardingViewModel: OnboardingViewModel = viewModel { OnboardingViewModel() }
+                            OnboardingScreen(
+                                viewModel = onboardingViewModel,
+                                onComplete = {
+                                    navController.navigate(Screen.Home.route) {
+                                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+
+                        // Reel player
+                        composable(Screen.ReelPlayer.route) { backStackEntry ->
+                            val reelViewModel: ReelViewModel = viewModel { ReelViewModel() }
+                            ReelPlayerScreen(
+                                viewModel = reelViewModel,
+                                onNavigateBack = { navController.popBackStack() },
+                                onNavigateToCreator = { userId ->
+                                    navController.navigate(Screen.UserProfile.createRoute(userId))
+                                },
+                                onNavigateToQuiz = { videoId ->
+                                    navController.navigate(Screen.QuizScreen.createRoute(videoId))
+                                }
+                            )
+                        }
+
+                        // Quiz screen
+                        composable(Screen.QuizScreen.route) { backStackEntry ->
+                            val quizId = backStackEntry.destination.route
+                                ?.removePrefix("quiz/")
+                                ?: ""
+                            QuizScreen(
+                                quizId = quizId,
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
+
+                        // Chat conversation
+                        composable(Screen.ChatConversation.route) { backStackEntry ->
+                            val conversationId = backStackEntry.destination.route
+                                ?.removePrefix("chat/")
+                                ?: ""
+                            val chatConversationViewModel: ChatConversationViewModel = viewModel { ChatConversationViewModel() }
+                            ChatConversationScreen(
+                                viewModel = chatConversationViewModel,
+                                conversationId = conversationId,
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
+
+                        // Notifications
+                        composable(Screen.Notifications.route) {
+                            val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel() }
+                            NotificationScreen(viewModel = notificationViewModel)
+                        }
+
+                        // Leaderboard
+                        composable(Screen.Leaderboard.route) {
+                            val leaderboardViewModel: LeaderboardViewModel = viewModel { LeaderboardViewModel() }
+                            LeaderboardScreen(viewModel = leaderboardViewModel)
+                        }
+
+                        // Creator Analytics (wide layout)
+                        composable(Screen.CreatorAnalytics.route) {
+                            val analyticsViewModel: AnalyticsViewModel = viewModel { AnalyticsViewModel() }
+                            AnalyticsScreen(viewModel = analyticsViewModel)
+                        }
+
+                        // Moderation Dashboard (wide layout, web-only)
+                        composable(Screen.ModerationDashboard.route) {
+                            val moderationViewModel: ModerationViewModel = viewModel { ModerationViewModel() }
+                            ModerationDashboard(viewModel = moderationViewModel)
+                        }
+
+                        // Settings (placeholder)
+                        composable(Screen.Settings.route) { PlaceholderScreen("Settings") }
+>>>>>>> Stashed changes
                     }
                 }
             }

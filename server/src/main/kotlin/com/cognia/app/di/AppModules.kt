@@ -94,7 +94,7 @@ val onboardingModule = module {
 val contentModule = module {
     single { VideoRepository() }
     single { VideoService(get(), getOrNull(), getOrNull()) }
-    single<VideoProcessingService> { FfmpegVideoProcessingService(get()) }
+    single<VideoProcessingService> { FfmpegVideoProcessingService(get(), getOrNull()) }
     single { VideoProcessingQueue(get()) }
 }
 

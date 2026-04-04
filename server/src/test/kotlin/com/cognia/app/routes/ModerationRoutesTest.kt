@@ -171,7 +171,7 @@ class ModerationRoutesTest {
                 it[id] = "review-1"
                 it[contentId] = "video-1"
                 it[contentType] = "VIDEO"
-                it[isPostPublication] = 0
+                it[isPostPublication] = false
                 it[createdAt] = "2024-01-01T00:00:00"
             }
             VideosTable.insert {
@@ -229,7 +229,7 @@ class ModerationRoutesTest {
                 it[id] = "review-2"
                 it[contentId] = "video-2"
                 it[contentType] = "VIDEO"
-                it[isPostPublication] = 0
+                it[isPostPublication] = false
                 it[createdAt] = "2024-01-01T00:00:00"
             }
         }
@@ -272,7 +272,7 @@ class ModerationRoutesTest {
                 it[id] = "review-3"
                 it[contentId] = "video-3"
                 it[contentType] = "VIDEO"
-                it[isPostPublication] = 0
+                it[isPostPublication] = false
                 it[createdAt] = "2024-01-01T00:00:00"
             }
         }
@@ -308,7 +308,7 @@ class ModerationRoutesTest {
                 it[contentType] = "VIDEO"
                 it[decision] = "APPROVED"
                 it[moderatorId] = userId
-                it[isPostPublication] = 0
+                it[isPostPublication] = false
                 it[createdAt] = "2024-01-01T00:00:00"
                 it[decidedAt] = "2024-01-02T00:00:00"
             }

@@ -20,7 +20,7 @@ class VideoProcessingServiceTest {
         val thumbnailDir = File(tempDir, "thumbnails")
         return AppConfig(
             server = ServerConfig(8080, "0.0.0.0"),
-            database = DatabaseConfig("test.db"),
+            database = DatabaseConfig("jdbc:sqlite:test.db", "org.sqlite.JDBC", "", "", 1),
             jwt = JwtConfig("test-secret", "test-issuer", 3600000L, 2592000000L),
             video = VideoConfig(
                 rawPath = File(tempDir, "raw").absolutePath,
@@ -29,7 +29,8 @@ class VideoProcessingServiceTest {
                 maxSizeMb = 500
             ),
             oauth = OAuthConfig("", "", "", ""),
-            ai = AiConfig("", "claude-sonnet-4-20250514"),
+            ai = AiConfig("", "claude-sonnet-4-20250514", "claude-haiku-4-5-20251001", 1024),
+            moderation = ModerationConfig(0.95, 0.7),
             ffmpeg = FfmpegConfig("/usr/bin/false")
         )
     }

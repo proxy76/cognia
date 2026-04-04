@@ -3,6 +3,7 @@ package com.cognia.app.ui.reel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cognia.app.network.ApiClientProvider
+import com.cognia.app.network.ApiConfig
 import com.cognia.app.network.ApiResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,8 +48,8 @@ class ReelViewModel : ViewModel() {
                             title = item.title,
                             creatorName = item.creatorName,
                             creatorId = item.creatorId,
-                            videoUrl = null, // Video streaming URL would come from video detail
-                            thumbnailUrl = item.thumbnailUrl,
+                            videoUrl = "${ApiConfig.baseUrl}${ApiConfig.API_PREFIX}/videos/${item.id}/stream",
+                            thumbnailUrl = "${ApiConfig.baseUrl}${ApiConfig.API_PREFIX}/videos/${item.id}/thumbnail",
                             hasQuiz = item.hasQuiz
                         )
                     }

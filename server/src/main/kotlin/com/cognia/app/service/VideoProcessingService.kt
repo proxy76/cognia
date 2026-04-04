@@ -2,6 +2,7 @@ package com.cognia.app.service
 
 import com.cognia.app.config.AppConfig
 import com.cognia.app.database.VideosTable
+import com.cognia.app.repository.ModerationRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -14,7 +15,8 @@ interface VideoProcessingService {
 }
 
 class FfmpegVideoProcessingService(
-    private val config: AppConfig
+    private val config: AppConfig,
+    private val moderationRepository: ModerationRepository? = null
 ) : VideoProcessingService {
 
     private val logger = LoggerFactory.getLogger(FfmpegVideoProcessingService::class.java)
@@ -23,6 +25,7 @@ class FfmpegVideoProcessingService(
         withContext(Dispatchers.IO) {
             try {
                 updateVideoStatus(videoId, "PROCESSING")
+                updateProcessingStatus(videoId, "PROCESSING")
 
                 val processedDir = File(config.video.processedPath)
                 val thumbnailDir = File(config.video.thumbnailPath)
@@ -48,8 +51,12 @@ class FfmpegVideoProcessingService(
                 if (transcodeResult != 0) {
                     logger.error("FFmpeg transcoding failed for video $videoId with exit code $transcodeResult")
                     updateVideoStatus(videoId, "PROCESSING_FAILED")
+                    updateProcessingStatus(videoId, "FAILED", "FFmpeg transcoding failed with exit code $transcodeResult")
                     return@withContext
                 }
+
+                // Extract duration via ffprobe
+                val duration = probeDuration(rawFilePath)
 
                 // Generate thumbnail
                 val thumbnailResult = runFfmpeg(
@@ -72,11 +79,18 @@ class FfmpegVideoProcessingService(
                     if (thumbnailResult == 0) thumbnailPath else null
                 )
 
-                logger.info("Video processing completed for $videoId")
+                updateProcessingStatus(videoId, "COMPLETED", durationSeconds = duration)
+
+                // Auto-submit for moderation review
+                updateVideoStatus(videoId, "PENDING_REVIEW")
+                moderationRepository?.createReview(videoId, "VIDEO", isPostPublication = false)
+
+                logger.info("Video processing completed and submitted for review: $videoId")
 
             } catch (e: Exception) {
                 logger.error("Video processing failed for $videoId", e)
                 updateVideoStatus(videoId, "PROCESSING_FAILED")
+                updateProcessingStatus(videoId, "FAILED", e.message)
             }
         }
     }
@@ -87,6 +101,26 @@ class FfmpegVideoProcessingService(
             .start()
         process.inputStream.bufferedReader().readLines() // consume output
         return process.waitFor()
+    }
+
+    internal fun probeDuration(filePath: String): Double? {
+        return try {
+            val ffprobePath = config.ffmpeg.path.replace("ffmpeg", "ffprobe")
+            val process = ProcessBuilder(
+                ffprobePath,
+                "-v", "error",
+                "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1",
+                filePath
+            ).redirectErrorStream(true).start()
+
+            val output = process.inputStream.bufferedReader().readText().trim()
+            process.waitFor()
+            output.toDoubleOrNull()
+        } catch (e: Exception) {
+            logger.warn("Failed to probe duration for $filePath", e)
+            null
+        }
     }
 
     internal fun updateVideoRecord(videoId: String, videoUrl: String, thumbnailUrl: String?) {
@@ -105,6 +139,18 @@ class FfmpegVideoProcessingService(
         transaction {
             VideosTable.update({ VideosTable.id eq videoId }) {
                 it[VideosTable.status] = status
+            }
+        }
+    }
+
+    internal fun updateProcessingStatus(videoId: String, processingStatus: String, error: String? = null, durationSeconds: Double? = null) {
+        transaction {
+            VideosTable.update({ VideosTable.id eq videoId }) {
+                it[VideosTable.processingStatus] = processingStatus
+                it[VideosTable.processingError] = error
+                if (durationSeconds != null) {
+                    it[VideosTable.durationSeconds] = durationSeconds
+                }
             }
         }
     }

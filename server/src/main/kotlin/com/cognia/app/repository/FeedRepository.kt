@@ -50,7 +50,18 @@ class FeedRepository {
                 viewCountExpr
             )
             .where { VideosTable.status eq "PUBLISHED" }
-            .groupBy(VideosTable.id)
+            .groupBy(
+                VideosTable.id,
+                VideosTable.title,
+                VideosTable.creatorId,
+                UsersTable.displayName,
+                VideosTable.thumbnailUrl,
+                CategoriesTable.name,
+                VideosTable.difficulty,
+                QuizzesTable.id,
+                VideosTable.categoryId,
+                VideosTable.publishedAt
+            )
 
         // Order: user categories first (if available), then by popularity
         if (userCategoryIds.isNotEmpty()) {
@@ -122,7 +133,17 @@ class FeedRepository {
                     published
                 }
             }
-            .groupBy(VideosTable.id)
+            .groupBy(
+                VideosTable.id,
+                VideosTable.title,
+                VideosTable.creatorId,
+                UsersTable.displayName,
+                VideosTable.thumbnailUrl,
+                CategoriesTable.name,
+                VideosTable.difficulty,
+                QuizzesTable.id,
+                VideosTable.publishedAt
+            )
             .orderBy(VideosTable.publishedAt to SortOrder.DESC)
             .limit(limit)
             .offset(offset)

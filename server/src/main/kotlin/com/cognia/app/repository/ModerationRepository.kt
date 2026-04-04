@@ -30,7 +30,7 @@ class ModerationRepository {
             it[ModerationReviewsTable.id] = id
             it[ModerationReviewsTable.contentId] = contentId
             it[ModerationReviewsTable.contentType] = contentType
-            it[ModerationReviewsTable.isPostPublication] = if (isPostPublication) 1 else 0
+            it[ModerationReviewsTable.isPostPublication] = isPostPublication
             it[ModerationReviewsTable.createdAt] = now
         }
 
@@ -86,7 +86,7 @@ class ModerationRepository {
         moderatorId = this[ModerationReviewsTable.moderatorId],
         decision = this[ModerationReviewsTable.decision],
         reason = this[ModerationReviewsTable.reason],
-        isPostPublication = this[ModerationReviewsTable.isPostPublication] != 0,
+        isPostPublication = this[ModerationReviewsTable.isPostPublication],
         createdAt = this[ModerationReviewsTable.createdAt],
         decidedAt = this[ModerationReviewsTable.decidedAt]
     )

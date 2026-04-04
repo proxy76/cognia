@@ -2,7 +2,10 @@ package com.cognia.app.service
 
 object ContentStateMachine {
     private val validTransitions: Map<String, Set<String>> = mapOf(
-        "DRAFT" to setOf("PENDING_REVIEW", "PUBLISHED"),
+        "DRAFT" to setOf("PROCESSING", "PENDING_REVIEW", "PUBLISHED"),
+        "PROCESSING" to setOf("PROCESSED", "PROCESSING_FAILED"),
+        "PROCESSED" to setOf("PENDING_REVIEW", "PUBLISHED"),
+        "PROCESSING_FAILED" to setOf("DRAFT"),
         "PENDING_REVIEW" to setOf("PUBLISHED", "REJECTED"),
         "REJECTED" to setOf("DRAFT"),
         "PUBLISHED" to setOf("ARCHIVED"),

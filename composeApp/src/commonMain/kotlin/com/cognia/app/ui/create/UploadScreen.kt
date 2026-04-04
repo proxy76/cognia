@@ -96,7 +96,7 @@ private fun SuccessContent(onCreateAnother: () -> Unit, modifier: Modifier = Mod
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Your video has been submitted for processing.",
+            text = "Your video has been uploaded and submitted for review.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -126,6 +126,7 @@ private fun UploadFormContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(120.dp)
+<<<<<<< Updated upstream
                 .clickable {
                     // TODO: Integrate platform file picker
                     viewModel.selectFile("sample_video.mp4")
@@ -134,6 +135,11 @@ private fun UploadFormContent(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant
             ),
             shape = RoundedCornerShape(12.dp)
+=======
+                .clickable { viewModel.pickFile() },
+            colors = CardDefaults.cardColors(containerColor = SurfaceDarkCard),
+            shape = MaterialTheme.shapes.medium,
+>>>>>>> Stashed changes
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),

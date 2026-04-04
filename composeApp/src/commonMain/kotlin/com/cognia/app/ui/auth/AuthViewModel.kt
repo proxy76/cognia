@@ -18,7 +18,8 @@ data class AuthUiState(
     val displayNameError: String? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val authSuccess: AuthSuccessData? = null
+    val authSuccess: AuthSuccessData? = null,
+    val moderatorLoginSuccess: Boolean = false
 )
 
 data class AuthSuccessData(
@@ -140,6 +141,34 @@ class AuthViewModel : ViewModel() {
                             token = result.data.token,
                             isNewUser = false
                         )
+                    )
+                }
+                is ApiResult.Error -> {
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = result.message
+                    )
+                }
+                is ApiResult.NetworkError -> {
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = "Network error: ${result.throwable.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun loginAsModerator() {
+        _state.value = _state.value.copy(isLoading = true, error = null)
+
+        viewModelScope.launch {
+            when (val result = api.login("admin@cognia.dev", "admin")) {
+                is ApiResult.Success -> {
+                    ApiClientProvider.tokenStorage.setTokens(result.data.token, result.data.refreshToken)
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        moderatorLoginSuccess = true
                     )
                 }
                 is ApiResult.Error -> {

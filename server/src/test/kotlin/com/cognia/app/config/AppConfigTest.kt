@@ -26,9 +26,13 @@ class AppConfigTest {
     }
 
     @Test
-    fun `database config has correct default path`() {
+    fun `database config has correct defaults`() {
         val db = DatabaseConfig.fromEnvironment()
-        assertEquals("./data/cognia-dev.db", db.path)
+        assertEquals("jdbc:postgresql://localhost:5432/cognia", db.url)
+        assertEquals("org.postgresql.Driver", db.driver)
+        assertEquals("cognia", db.user)
+        assertEquals("cognia", db.password)
+        assertEquals(10, db.maxPoolSize)
     }
 
     @Test

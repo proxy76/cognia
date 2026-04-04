@@ -63,6 +63,14 @@ object VideosTable : Table("videos") {
     val rawFilePath = text("raw_file_path").nullable()
     val status = text("status").default("DRAFT")
     val difficulty = text("difficulty").nullable()
+    val mimeType = varchar("mime_type", 100).nullable()
+    val fileExtension = varchar("file_extension", 20).nullable()
+    val fileSizeBytes = long("file_size_bytes").nullable()
+    val durationSeconds = double("duration_seconds").nullable()
+    val uploadStatus = varchar("upload_status", 20).default("PENDING")
+    val processingStatus = varchar("processing_status", 20).default("PENDING")
+    val processingError = text("processing_error").nullable()
+    val eli5VideoId = text("eli5_video_id").references(id).nullable()
     val createdAt = text("created_at")
     val updatedAt = text("updated_at")
     val publishedAt = text("published_at").nullable()
@@ -73,6 +81,7 @@ object VideosTable : Table("videos") {
         index(false, status)
         index(false, categoryId)
         index(false, publishedAt)
+        index(false, eli5VideoId)
     }
 }
 
@@ -196,7 +205,7 @@ object ModerationReviewsTable : Table("moderation_reviews") {
     val moderatorId = text("moderator_id").references(UsersTable.id).nullable()
     val decision = text("decision").nullable()
     val reason = text("reason").nullable()
-    val isPostPublication = integer("is_post_publication").default(0)
+    val isPostPublication = bool("is_post_publication").default(false)
     val createdAt = text("created_at")
     val decidedAt = text("decided_at").nullable()
     override val primaryKey = PrimaryKey(id)
@@ -287,7 +296,7 @@ object NotificationsTable : Table("notifications") {
     val body = text("body")
     val referenceId = text("reference_id").nullable()
     val referenceType = text("reference_type").nullable()
-    val read = integer("read").default(0)
+    val read = bool("read").default(false)
     val createdAt = text("created_at")
     override val primaryKey = PrimaryKey(id)
 
