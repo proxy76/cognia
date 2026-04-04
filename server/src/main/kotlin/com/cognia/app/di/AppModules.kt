@@ -22,7 +22,14 @@ import com.cognia.app.service.FfmpegVideoProcessingService
 import com.cognia.app.service.VideoProcessingQueue
 import com.cognia.app.service.VideoProcessingService
 import com.cognia.app.service.VideoService
+import com.cognia.app.service.LevelService
+import com.cognia.app.service.BadgeService
+import com.cognia.app.repository.QuizAttemptRepository
+import com.cognia.app.repository.QuizRepository
 import com.cognia.app.repository.VideoRepository
+import com.cognia.app.repository.BadgeRepository
+import com.cognia.app.service.QuizService
+import com.cognia.app.service.ScoringService
 import org.koin.dsl.module
 
 // Empty module stubs for each feature area — will be populated as features are implemented
@@ -59,7 +66,10 @@ val contentModule = module {
 }
 
 val quizModule = module {
-    // QuizService, QuizRepository
+    single { QuizRepository() }
+    single { QuizAttemptRepository() }
+    single { QuizService(get()) }
+    single { ScoringService(get(), get()) }
 }
 
 val feedModule = module {
@@ -83,7 +93,9 @@ val licensingModule = module {
 }
 
 val gamificationModule = module {
-    // GamificationService, BadgeService, LeaderboardService
+    single { BadgeRepository() }
+    single { LevelService() }
+    single { BadgeService(get()) }
 }
 
 val notificationModule = module {

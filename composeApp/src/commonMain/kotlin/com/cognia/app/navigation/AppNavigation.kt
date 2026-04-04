@@ -28,6 +28,7 @@ import com.cognia.app.ui.screens.HomeScreen
 import com.cognia.app.ui.onboarding.OnboardingScreen
 import com.cognia.app.ui.onboarding.OnboardingViewModel
 import com.cognia.app.ui.screens.PlaceholderScreen
+import com.cognia.app.ui.quiz.QuizScreen
 import com.cognia.app.ui.profile.ProfileScreen
 import com.cognia.app.ui.profile.ProfileViewModel
 import com.cognia.app.ui.screens.SearchScreen
@@ -166,6 +167,17 @@ fun AppNavigation() {
                     onNavigateToQuiz = { videoId ->
                         navController.navigate(Screen.QuizScreen.createRoute(videoId))
                     }
+                )
+            }
+
+            // Quiz screen
+            composable(Screen.QuizScreen.route) { backStackEntry ->
+                val quizId = backStackEntry.destination.route
+                    ?.removePrefix("quiz/")
+                    ?: ""
+                QuizScreen(
+                    quizId = quizId,
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 

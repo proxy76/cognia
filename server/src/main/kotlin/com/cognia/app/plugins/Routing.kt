@@ -8,6 +8,8 @@ import com.cognia.app.routes.profileRoutes
 import com.cognia.app.routes.recommendationRoutes
 import com.cognia.app.routes.videoRoutes
 import com.cognia.app.routes.videoStreamRoutes
+import com.cognia.app.routes.gamificationRoutes
+import com.cognia.app.routes.quizRoutes
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -25,5 +27,7 @@ fun Application.configureRouting() {
         recommendationRoutes()
         videoRoutes()
         videoStreamRoutes()
+        gamificationRoutes()
+        quizRoutes()
     }
 }

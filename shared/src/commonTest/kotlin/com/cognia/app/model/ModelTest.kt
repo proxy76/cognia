@@ -14,7 +14,7 @@ class ModelTest {
 
     @Test
     fun contentStatusHasExpectedValues() {
-        assertEquals(7, ContentStatus.entries.size)
+        assertEquals(8, ContentStatus.entries.size)
     }
 
     @Test

@@ -6,11 +6,11 @@ import com.cognia.app.dto.auth.RegisterRequest
 import com.cognia.app.dto.chat.ChatMessageResponse
 import com.cognia.app.dto.content.VideoResponse
 import com.cognia.app.dto.notification.NotificationResponse
-import com.cognia.app.dto.quiz.QuizAnswerResult
-import com.cognia.app.dto.quiz.QuizAttemptResponse
-import com.cognia.app.dto.quiz.QuizCreateRequest
-import com.cognia.app.dto.quiz.QuizOptionCreate
-import com.cognia.app.dto.quiz.QuizQuestionCreate
+import com.cognia.app.dto.quiz.QuestionResult
+import com.cognia.app.dto.quiz.AttemptResultResponse
+import com.cognia.app.dto.quiz.CreateQuizRequest
+import com.cognia.app.dto.quiz.CreateOptionRequest
+import com.cognia.app.dto.quiz.CreateQuestionRequest
 import com.cognia.app.dto.user.CategorySummary
 import com.cognia.app.dto.user.UserSummary
 import kotlinx.serialization.json.Json
@@ -78,46 +78,46 @@ class DtoSerializationTest {
 
     @Test
     fun quizCreateRequestRoundTrip() {
-        val original = QuizCreateRequest(
+        val original = CreateQuizRequest(
             title = "Kotlin Basics Quiz",
             quizType = "MULTIPLE_CHOICE",
             categoryId = "cat-1",
             videoId = "video-1",
             difficulty = "BEGINNER",
             questions = listOf(
-                QuizQuestionCreate(
+                CreateQuestionRequest(
                     questionText = "What is val?",
                     options = listOf(
-                        QuizOptionCreate(text = "Immutable variable"),
-                        QuizOptionCreate(text = "Mutable variable"),
-                        QuizOptionCreate(text = "Function"),
-                        QuizOptionCreate(text = "Class")
+                        CreateOptionRequest(text = "Immutable variable"),
+                        CreateOptionRequest(text = "Mutable variable"),
+                        CreateOptionRequest(text = "Function"),
+                        CreateOptionRequest(text = "Class")
                     ),
                     correctOptionIndex = 0
                 )
             )
         )
-        val encoded = json.encodeToString(QuizCreateRequest.serializer(), original)
-        val decoded = json.decodeFromString(QuizCreateRequest.serializer(), encoded)
+        val encoded = json.encodeToString(CreateQuizRequest.serializer(), original)
+        val decoded = json.decodeFromString(CreateQuizRequest.serializer(), encoded)
         assertEquals(original, decoded)
     }
 
     @Test
     fun quizAttemptResponseRoundTrip() {
-        val original = QuizAttemptResponse(
+        val original = AttemptResultResponse(
             score = 3,
             totalQuestions = 5,
             pointsAwarded = 150,
             results = listOf(
-                QuizAnswerResult(questionId = "q-1", correct = true, correctOptionIndex = 0),
-                QuizAnswerResult(questionId = "q-2", correct = false, correctOptionIndex = 2),
-                QuizAnswerResult(questionId = "q-3", correct = true, correctOptionIndex = 1),
-                QuizAnswerResult(questionId = "q-4", correct = true, correctOptionIndex = 3),
-                QuizAnswerResult(questionId = "q-5", correct = false, correctOptionIndex = 0)
+                QuestionResult(questionId = "q-1", selectedIndex = 0, correctIndex = 0, isCorrect = true),
+                QuestionResult(questionId = "q-2", selectedIndex = 1, correctIndex = 2, isCorrect = false),
+                QuestionResult(questionId = "q-3", selectedIndex = 1, correctIndex = 1, isCorrect = true),
+                QuestionResult(questionId = "q-4", selectedIndex = 3, correctIndex = 3, isCorrect = true),
+                QuestionResult(questionId = "q-5", selectedIndex = 1, correctIndex = 0, isCorrect = false)
             )
         )
-        val encoded = json.encodeToString(QuizAttemptResponse.serializer(), original)
-        val decoded = json.decodeFromString(QuizAttemptResponse.serializer(), encoded)
+        val encoded = json.encodeToString(AttemptResultResponse.serializer(), original)
+        val decoded = json.decodeFromString(AttemptResultResponse.serializer(), encoded)
         assertEquals(original, decoded)
     }
 
