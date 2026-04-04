@@ -24,5 +24,6 @@ fun Application.module() {
     configureStatusPages()
     configureWebSockets()
     configureCallLogging()
+    configureAuth()
     configureRouting()
 }

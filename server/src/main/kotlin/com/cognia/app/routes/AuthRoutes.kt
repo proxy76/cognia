@@ -1,10 +1,12 @@
 package com.cognia.app.routes
 
 import com.cognia.app.dto.auth.LoginRequest
+import com.cognia.app.dto.auth.RefreshTokenRequest
 import com.cognia.app.dto.auth.RegisterRequest
 import com.cognia.app.service.AuthService
 import com.cognia.app.service.EmailAlreadyExistsException
 import com.cognia.app.service.InvalidCredentialsException
+import com.cognia.app.service.InvalidRefreshTokenException
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -38,6 +40,18 @@ fun Route.authRoutes() {
                 call.respond(HttpStatusCode.OK, response)
             } catch (e: InvalidCredentialsException) {
                 call.respond(HttpStatusCode.Unauthorized, ErrorBody(e.message ?: "Invalid credentials"))
+            } catch (e: IllegalArgumentException) {
+                call.respond(HttpStatusCode.BadRequest, ErrorBody(e.message ?: "Invalid request"))
+            }
+        }
+
+        post("/refresh") {
+            try {
+                val request = call.receive<RefreshTokenRequest>()
+                val response = authService.refresh(request)
+                call.respond(HttpStatusCode.OK, response)
+            } catch (e: InvalidRefreshTokenException) {
+                call.respond(HttpStatusCode.Unauthorized, ErrorBody(e.message ?: "Invalid refresh token"))
             } catch (e: IllegalArgumentException) {
                 call.respond(HttpStatusCode.BadRequest, ErrorBody(e.message ?: "Invalid request"))
             }

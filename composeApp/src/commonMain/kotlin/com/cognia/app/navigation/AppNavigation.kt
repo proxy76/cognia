@@ -24,7 +24,8 @@ import com.cognia.app.ui.screens.ChatListScreen
 import com.cognia.app.ui.screens.CreateScreen
 import com.cognia.app.ui.screens.HomeScreen
 import com.cognia.app.ui.screens.PlaceholderScreen
-import com.cognia.app.ui.screens.ProfileScreen
+import com.cognia.app.ui.profile.ProfileScreen
+import com.cognia.app.ui.profile.ProfileViewModel
 import com.cognia.app.ui.screens.SearchScreen
 
 @Composable
@@ -69,7 +70,10 @@ fun AppNavigation() {
             composable(Screen.Search.route) { SearchScreen() }
             composable(Screen.Create.route) { CreateScreen() }
             composable(Screen.Chat.route) { ChatListScreen() }
-            composable(Screen.Profile.route) { ProfileScreen() }
+            composable(Screen.Profile.route) {
+                val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel() }
+                ProfileScreen(viewModel = profileViewModel)
+            }
 
             // Auth screens
             composable(Screen.Welcome.route) {

@@ -1,8 +1,16 @@
 package com.cognia.app.di
 
 import com.cognia.app.config.AppConfig
+import com.cognia.app.repository.RefreshTokenRepository
 import com.cognia.app.repository.UserRepository
+import com.cognia.app.repository.UserProfileRepository
 import com.cognia.app.service.AuthService
+import com.cognia.app.service.UserProfileService
+import com.cognia.app.service.AppleTokenVerifier
+import com.cognia.app.service.DevAppleTokenVerifier
+import com.cognia.app.service.DevGoogleTokenVerifier
+import com.cognia.app.service.GoogleTokenVerifier
+import com.cognia.app.service.OAuthService
 import org.koin.dsl.module
 
 // Empty module stubs for each feature area — will be populated as features are implemented
@@ -10,11 +18,16 @@ import org.koin.dsl.module
 val authModule = module {
     single { AppConfig.fromEnvironment() }
     single { UserRepository() }
-    single { AuthService(get(), get()) }
+    single { RefreshTokenRepository() }
+    single { AuthService(get(), get(), get()) }
+    single<GoogleTokenVerifier> { DevGoogleTokenVerifier() }
+    single<AppleTokenVerifier> { DevAppleTokenVerifier() }
+    single { OAuthService(get(), get()) }
 }
 
 val userModule = module {
-    // UserService, UserProfileRepository
+    single { UserProfileRepository() }
+    single { UserProfileService(get()) }
 }
 
 val onboardingModule = module {

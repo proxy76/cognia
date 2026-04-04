@@ -6,8 +6,10 @@ import com.cognia.app.dto.auth.AuthResponse
 import com.cognia.app.dto.auth.LoginRequest
 import com.cognia.app.dto.auth.RegisterRequest
 import com.cognia.app.plugins.*
+import com.cognia.app.repository.RefreshTokenRepository
+import com.cognia.app.repository.UserProfileRepository
 import com.cognia.app.repository.UserRepository
-import com.cognia.app.service.AuthService
+import com.cognia.app.service.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
@@ -41,7 +43,13 @@ class AuthRoutesTest {
             val testModule = module {
                 single { testConfig }
                 single { UserRepository() }
-                single { AuthService(get(), get()) }
+                single { RefreshTokenRepository() }
+                single { AuthService(get(), get(), get()) }
+                single<GoogleTokenVerifier> { DevGoogleTokenVerifier() }
+                single<AppleTokenVerifier> { DevAppleTokenVerifier() }
+                single { OAuthService(get(), get()) }
+                single { UserProfileRepository() }
+                single { UserProfileService(get()) }
             }
 
             install(Koin) {
@@ -50,6 +58,7 @@ class AuthRoutesTest {
 
             configureSerialization()
             configureStatusPages()
+            configureAuth()
             configureRouting()
         }
 
