@@ -29,6 +29,9 @@ import com.cognia.app.dto.social.FollowerListResponse
 import com.cognia.app.dto.social.FollowingListResponse
 import com.cognia.app.dto.social.FriendListResponse
 import com.cognia.app.dto.social.PendingRequestsResponse
+import com.cognia.app.dto.moderation.*
+import com.cognia.app.dto.gamification.BadgeListResponse
+import com.cognia.app.dto.ai.*
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -211,6 +214,114 @@ class CogniaApiClient(
 
     suspend fun getPendingFriendRequests(): ApiResult<PendingRequestsResponse> =
         safeCall { client.get(ApiConfig.apiUrl("/friends/requests")) }
+
+    // ── Moderation (MODERATOR/ADMIN) ──────────────────────────────
+    suspend fun getModerationQueue(): ApiResult<ModerationQueueResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/moderation/queue")) }
+
+    suspend fun decideModerationReview(
+        reviewId: String,
+        decision: String,
+        reason: String? = null,
+        issueStrike: Boolean = false
+    ): ApiResult<ModerationReviewResponse> =
+        safeCall {
+            client.post(ApiConfig.apiUrl("/moderation/$reviewId/decide")) {
+                contentType(ContentType.Application.Json)
+                setBody(ModerationDecisionRequest(decision = decision, reason = reason, issueStrike = issueStrike))
+            }
+        }
+
+    suspend fun getModerationReviews(): ApiResult<ModerationReviewListResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/moderation/reviews")) }
+
+    suspend fun getReports(): ApiResult<ReportListResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/reports")) }
+
+    suspend fun createReport(contentId: String, contentType: String, reason: String): ApiResult<ReportResponse> =
+        safeCall {
+            client.post(ApiConfig.apiUrl("/reports")) {
+                this.contentType(ContentType.Application.Json)
+                setBody(ReportCreateRequest(contentId = contentId, contentType = contentType, reason = reason))
+            }
+        }
+
+    suspend fun resolveReport(reportId: String, status: String, resolution: String? = null): ApiResult<ReportResponse> =
+        safeCall {
+            client.patch(ApiConfig.apiUrl("/reports/$reportId/resolve")) {
+                contentType(ContentType.Application.Json)
+                setBody(ReportResolveRequest(status = status, resolution = resolution))
+            }
+        }
+
+    suspend fun getReportStats(): ApiResult<ReportStatsResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/reports/stats")) }
+
+    // ── License Requests ────────────────────────────────────────────
+    suspend fun getLicenseRequests(): ApiResult<LicenseRequestListResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/license/requests")) }
+
+    suspend fun approveLicenseRequest(requestId: String): ApiResult<LicenseRequestResponse> =
+        safeCall { client.post(ApiConfig.apiUrl("/license/$requestId/approve")) }
+
+    suspend fun rejectLicenseRequest(requestId: String, reason: String? = null): ApiResult<LicenseRequestResponse> =
+        safeCall {
+            client.post(ApiConfig.apiUrl("/license/$requestId/reject")) {
+                contentType(ContentType.Application.Json)
+                setBody(LicenseRejectRequest(reason = reason))
+            }
+        }
+
+    // ── Blocking ────────────────────────────────────────────────────
+    suspend fun blockUser(userId: String): ApiResult<BlockedUserResponse> =
+        safeCall { client.post(ApiConfig.apiUrl("/users/$userId/block")) }
+
+    suspend fun unblockUser(userId: String): ApiResult<Unit> =
+        safeCall { client.delete(ApiConfig.apiUrl("/users/$userId/block")) }
+
+    suspend fun getBlockedUsers(): ApiResult<BlockedUserListResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/users/me/blocked")) }
+
+    // ── Badges ──────────────────────────────────────────────────────
+    suspend fun getAllBadges(): ApiResult<BadgeListResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/badges")) }
+
+    suspend fun getMyBadges(): ApiResult<BadgeListResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/users/me/badges")) }
+
+    // ── AI ──────────────────────────────────────────────────────────
+    suspend fun aiCategorize(title: String, description: String? = null): ApiResult<CategorizationResponse> =
+        safeCall {
+            client.post(ApiConfig.apiUrl("/ai/categorize")) {
+                contentType(ContentType.Application.Json)
+                setBody(CategorizationRequest(title = title, description = description))
+            }
+        }
+
+    suspend fun aiGenerateQuiz(request: QuizGenerateRequest): ApiResult<QuizGenerateResponse> =
+        safeCall {
+            client.post(ApiConfig.apiUrl("/ai/quiz-generate")) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+        }
+
+    // ── Admin ───────────────────────────────────────────────────────
+    suspend fun suspendUser(userId: String, durationDays: Int, reason: String): ApiResult<Unit> =
+        safeCall {
+            client.post(ApiConfig.apiUrl("/users/$userId/suspend")) {
+                contentType(ContentType.Application.Json)
+                setBody(SuspendUserRequest(durationDays = durationDays, reason = reason))
+            }
+        }
+
+    suspend fun getAuditLog(limit: Int = 100, offset: Int = 0): ApiResult<AuditLogResponse> =
+        safeCall {
+            client.get(ApiConfig.apiUrl("/moderation/audit")) {
+                parameter("limit", limit)
+                parameter("offset", offset)
+            }
+        }
 
     // ── Internal helpers ────────────────────────────────────────────
     private suspend inline fun <reified T> safeCall(block: () -> HttpResponse): ApiResult<T> {

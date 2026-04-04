@@ -43,6 +43,8 @@ object DatabaseFactory {
                 BadgesTable,
                 UserBadgesTable,
                 NotificationsTable,
+                UserBlocksTable,
+                ModerationAuditLogTable,
                 ContentViewsTable,
                 ContentSharesTable,
                 SearchHistoryTable

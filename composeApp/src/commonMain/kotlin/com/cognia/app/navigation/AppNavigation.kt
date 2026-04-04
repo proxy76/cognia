@@ -43,6 +43,7 @@ import com.cognia.app.ui.analytics.AnalyticsViewModel
 import com.cognia.app.ui.leaderboard.LeaderboardScreen
 import com.cognia.app.ui.leaderboard.LeaderboardViewModel
 import com.cognia.app.ui.moderation.ModerationDashboard
+import com.cognia.app.ui.moderation.ModerationViewModel
 
 @Composable
 fun AppNavigation() {
@@ -241,7 +242,10 @@ fun AppNavigation() {
             }
 
             // Moderation Dashboard (web-only)
-            composable(Screen.ModerationDashboard.route) { ModerationDashboard() }
+            composable(Screen.ModerationDashboard.route) {
+                val moderationViewModel: ModerationViewModel = viewModel { ModerationViewModel() }
+                ModerationDashboard(viewModel = moderationViewModel)
+            }
 
             // Settings (placeholder)
             composable(Screen.Settings.route) { PlaceholderScreen("Settings") }

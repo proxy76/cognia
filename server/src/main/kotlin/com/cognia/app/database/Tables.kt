@@ -12,6 +12,7 @@ object UsersTable : Table("users") {
     val avatarUrl = text("avatar_url").nullable()
     val role = text("role").default("LEARNER")
     val authProvider = text("auth_provider").default("EMAIL")
+    val suspendedUntil = text("suspended_until").nullable()
     val createdAt = text("created_at")
     val updatedAt = text("updated_at")
     override val primaryKey = PrimaryKey(id)
@@ -212,11 +213,17 @@ object ContentReportsTable : Table("content_reports") {
     val contentType = text("content_type")
     val reason = text("reason")
     val status = text("status").default("PENDING")
+    val reportCount = integer("report_count").default(1)
+    val aiAssessment = text("ai_assessment").nullable()
+    val aiConfidence = text("ai_confidence").nullable()
+    val resolution = text("resolution").nullable()
+    val resolvedAt = text("resolved_at").nullable()
     val createdAt = text("created_at")
     override val primaryKey = PrimaryKey(id)
 
     init {
         index(false, status)
+        index(false, contentId, contentType)
     }
 }
 
@@ -301,6 +308,39 @@ object SearchHistoryTable : Table("search_history") {
 
     init {
         index(false, userId, searchedAt)
+    }
+}
+
+// ── User Blocks ────────────────────────────────────────────────────
+
+object UserBlocksTable : Table("user_blocks") {
+    val id = text("id")
+    val blockerId = text("blocker_id").references(UsersTable.id)
+    val blockedId = text("blocked_id").references(UsersTable.id)
+    val createdAt = text("created_at")
+    override val primaryKey = PrimaryKey(id)
+
+    init {
+        uniqueIndex(blockerId, blockedId)
+        index(false, blockedId)
+    }
+}
+
+// ── Moderation Audit Log ───────────────────────────────────────────
+
+object ModerationAuditLogTable : Table("moderation_audit_log") {
+    val id = text("id")
+    val moderatorId = text("moderator_id").references(UsersTable.id)
+    val action = text("action")
+    val targetType = text("target_type")
+    val targetId = text("target_id")
+    val details = text("details").nullable()
+    val createdAt = text("created_at")
+    override val primaryKey = PrimaryKey(id)
+
+    init {
+        index(false, moderatorId)
+        index(false, createdAt)
     }
 }
 

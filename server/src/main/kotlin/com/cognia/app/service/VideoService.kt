@@ -2,10 +2,13 @@ package com.cognia.app.service
 
 import com.cognia.app.dto.content.VideoDetailResponse
 import com.cognia.app.dto.content.VideoUpdateRequest
+import com.cognia.app.repository.ModerationRepository
 import com.cognia.app.repository.VideoRepository
 
 class VideoService(
-    private val videoRepository: VideoRepository
+    private val videoRepository: VideoRepository,
+    private val aiModerationService: AiModerationService? = null,
+    private val moderationRepository: ModerationRepository? = null
 ) {
 
     fun createDraft(
@@ -56,8 +59,25 @@ class VideoService(
 
         ContentStateMachine.validateTransition(video.status, "PENDING_REVIEW")
 
+        // AI pre-screening: auto-reject high-confidence violations
+        if (aiModerationService != null && moderationRepository != null) {
+            val (aiResult, action) = aiModerationService.assessAndDecide(
+                title = video.title,
+                description = video.description,
+                contentType = "VIDEO"
+            )
+            if (action == "reject") {
+                val updated = videoRepository.updateStatus(id, "REJECTED")
+                    ?: throw VideoNotFoundException(id)
+                return updated.toResponse()
+            }
+        }
+
         val updated = videoRepository.updateStatus(id, "PENDING_REVIEW")
             ?: throw VideoNotFoundException(id)
+
+        // Create moderation review entry
+        moderationRepository?.createReview(id, "VIDEO", isPostPublication = false)
 
         return updated.toResponse()
     }

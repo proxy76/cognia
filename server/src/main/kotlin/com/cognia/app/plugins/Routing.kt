@@ -19,6 +19,9 @@ import com.cognia.app.routes.notificationWebSocket
 import com.cognia.app.routes.analyticsRoutes
 import com.cognia.app.routes.licenseRoutes
 import com.cognia.app.routes.moderationRoutes
+import com.cognia.app.routes.aiRoutes
+import com.cognia.app.routes.blockRoutes
+import com.cognia.app.routes.adminRoutes
 import com.cognia.app.routes.quizRoutes
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -49,5 +52,8 @@ fun Application.configureRouting() {
         analyticsRoutes()
         moderationRoutes()
         licenseRoutes()
+        aiRoutes()
+        blockRoutes()
+        adminRoutes()
     }
 }

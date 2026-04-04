@@ -1,7 +1,6 @@
 package com.cognia.app.service
 
 import com.cognia.app.config.AppConfig
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 import java.net.URI
 import java.net.http.HttpClient
@@ -13,6 +12,10 @@ interface RecommendationClient {
     fun getRecommendations(prompt: String): String?
 }
 
+/**
+ * General-purpose Anthropic Messages API client.
+ * Supports system prompts, model selection, and configurable max tokens.
+ */
 class AnthropicRecommendationClient(
     private val config: AppConfig
 ) : RecommendationClient {
@@ -24,14 +27,40 @@ class AnthropicRecommendationClient(
     private val json = Json { ignoreUnknownKeys = true }
 
     override fun getRecommendations(prompt: String): String? {
+        return sendMessage(prompt = prompt)
+    }
+
+    /**
+     * Send a message to the Anthropic API with optional system prompt and model override.
+     * @param prompt The user message content
+     * @param systemPrompt Optional system prompt for context/instructions
+     * @param model Override the default model (null = use config default)
+     * @param useFastModel If true, use the fast model (haiku) instead of the default
+     * @param maxTokens Override max tokens (null = use config default)
+     * @return The text response, or null on failure
+     */
+    fun sendMessage(
+        prompt: String,
+        systemPrompt: String? = null,
+        model: String? = null,
+        useFastModel: Boolean = false,
+        maxTokens: Int? = null
+    ): String? {
         val apiKey = config.ai.anthropicApiKey
         if (apiKey.isBlank()) {
             return null
         }
 
+        val selectedModel = model
+            ?: if (useFastModel) config.ai.anthropicFastModel else config.ai.anthropicModel
+        val selectedMaxTokens = maxTokens ?: config.ai.maxTokens
+
         val requestBody = buildJsonObject {
-            put("model", config.ai.anthropicModel)
-            put("max_tokens", 1024)
+            put("model", selectedModel)
+            put("max_tokens", selectedMaxTokens)
+            if (systemPrompt != null) {
+                put("system", systemPrompt)
+            }
             putJsonArray("messages") {
                 addJsonObject {
                     put("role", "user")

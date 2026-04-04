@@ -7,6 +7,7 @@ data class AppConfig(
     val video: VideoConfig,
     val oauth: OAuthConfig,
     val ai: AiConfig,
+    val moderation: ModerationConfig,
     val ffmpeg: FfmpegConfig
 ) {
     companion object {
@@ -17,6 +18,7 @@ data class AppConfig(
             video = VideoConfig.fromEnvironment(),
             oauth = OAuthConfig.fromEnvironment(),
             ai = AiConfig.fromEnvironment(),
+            moderation = ModerationConfig.fromEnvironment(),
             ffmpeg = FfmpegConfig.fromEnvironment()
         )
     }
@@ -94,12 +96,28 @@ data class OAuthConfig(
 
 data class AiConfig(
     val anthropicApiKey: String,
-    val anthropicModel: String
+    val anthropicModel: String,
+    val anthropicFastModel: String,
+    val maxTokens: Int
 ) {
     companion object {
         fun fromEnvironment() = AiConfig(
             anthropicApiKey = System.getenv("COGNIA_ANTHROPIC_API_KEY") ?: "",
-            anthropicModel = System.getenv("COGNIA_ANTHROPIC_MODEL") ?: "claude-sonnet-4-20250514"
+            anthropicModel = System.getenv("COGNIA_ANTHROPIC_MODEL") ?: "claude-sonnet-4-20250514",
+            anthropicFastModel = System.getenv("COGNIA_ANTHROPIC_FAST_MODEL") ?: "claude-haiku-4-5-20251001",
+            maxTokens = System.getenv("COGNIA_ANTHROPIC_MAX_TOKENS")?.toIntOrNull() ?: 1024
+        )
+    }
+}
+
+data class ModerationConfig(
+    val autoRejectThreshold: Double,
+    val reviewThreshold: Double
+) {
+    companion object {
+        fun fromEnvironment() = ModerationConfig(
+            autoRejectThreshold = System.getenv("COGNIA_MODERATION_AUTO_REJECT_THRESHOLD")?.toDoubleOrNull() ?: 0.95,
+            reviewThreshold = System.getenv("COGNIA_MODERATION_REVIEW_THRESHOLD")?.toDoubleOrNull() ?: 0.7
         )
     }
 }

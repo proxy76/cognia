@@ -52,6 +52,14 @@ import com.cognia.app.service.ModerationService
 import com.cognia.app.service.ReportService
 import com.cognia.app.service.SeedService
 import com.cognia.app.service.StrikeService
+import com.cognia.app.service.AiCategorizationService
+import com.cognia.app.service.AiModerationService
+import com.cognia.app.service.AiQuizGenerationService
+import com.cognia.app.service.BlockService
+import com.cognia.app.service.AuditLogService
+import com.cognia.app.service.AdminService
+import com.cognia.app.repository.BlockRepository
+import com.cognia.app.repository.AuditLogRepository
 import org.koin.dsl.module
 
 // Empty module stubs for each feature area — will be populated as features are implemented
@@ -77,12 +85,15 @@ val onboardingModule = module {
     single { PreferenceRepository() }
     single { PreferenceService(get(), get()) }
     single<RecommendationClient> { AnthropicRecommendationClient(get()) }
+    single { AnthropicRecommendationClient(get()) }
     single { OnboardingService(get()) }
+    single { AiCategorizationService(get()) }
+    single { AiQuizGenerationService(get()) }
 }
 
 val contentModule = module {
     single { VideoRepository() }
-    single { VideoService(get()) }
+    single { VideoService(get(), getOrNull(), getOrNull()) }
     single<VideoProcessingService> { FfmpegVideoProcessingService(get()) }
     single { VideoProcessingQueue(get()) }
 }
@@ -116,9 +127,15 @@ val moderationModule = module {
     single { ModerationRepository() }
     single { ReportRepository() }
     single { StrikeRepository() }
+    single { BlockRepository() }
+    single { AuditLogRepository() }
     single { ModerationService(get(), get()) }
     single { ReportService(get(), get()) }
     single { StrikeService(get(), get()) }
+    single { BlockService(get()) }
+    single { AuditLogService(get()) }
+    single { AdminService(get()) }
+    single { AiModerationService(get(), get()) }
 }
 
 val licensingModule = module {

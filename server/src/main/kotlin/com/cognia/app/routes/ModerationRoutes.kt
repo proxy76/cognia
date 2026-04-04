@@ -3,7 +3,12 @@ package com.cognia.app.routes
 import com.cognia.app.auth.UserPrincipal
 import com.cognia.app.auth.authorize
 import com.cognia.app.dto.moderation.*
-import com.cognia.app.service.*
+import com.cognia.app.service.ModerationService
+import com.cognia.app.service.ReportService
+import com.cognia.app.service.StrikeService
+import com.cognia.app.service.AuditLogService
+import com.cognia.app.service.ModerationNotFoundException
+import com.cognia.app.service.ModerationAlreadyDecidedException
 import io.ktor.http.*
 import io.ktor.server.auth.*
 import io.ktor.server.request.*
@@ -15,6 +20,7 @@ fun Route.moderationRoutes() {
     val moderationService by application.inject<ModerationService>()
     val reportService by application.inject<ReportService>()
     val strikeService by application.inject<StrikeService>()
+    val auditLogService by application.inject<AuditLogService>()
 
     route("/api/v1/moderation") {
         authenticate("auth-jwt") {
@@ -62,6 +68,14 @@ fun Route.moderationRoutes() {
                                 }
                             }
                         }
+
+                        auditLogService.log(
+                            moderatorId = principal.userId,
+                            action = "MODERATION_DECISION",
+                            targetType = "REVIEW",
+                            targetId = id,
+                            details = "Decision: ${request.decision}, Strike: ${request.issueStrike}"
+                        )
 
                         call.respond(HttpStatusCode.OK, result)
                     } catch (e: ModerationNotFoundException) {
