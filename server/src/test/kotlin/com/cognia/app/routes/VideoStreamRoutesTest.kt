@@ -59,6 +59,7 @@ class VideoStreamRoutesTest {
             configureSerialization()
             configureStatusPages()
             configureAuth()
+            configureWebSockets()
             configureRouting()
         }
 

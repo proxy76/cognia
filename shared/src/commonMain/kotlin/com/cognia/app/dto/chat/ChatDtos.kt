@@ -51,3 +51,24 @@ data class SendSharedPostRequest(
     val sharedContentId: String,
     val sharedContentType: String
 )
+
+@Serializable
+data class CreateConversationRequest(
+    val participantId: String
+)
+
+@Serializable
+data class WebSocketChatMessage(
+    val conversationId: String,
+    val messageType: String = "TEXT",
+    val textContent: String? = null,
+    val sharedContentId: String? = null,
+    val sharedContentType: String? = null
+)
+
+@Serializable
+data class WebSocketChatEvent(
+    val type: String,
+    val message: ChatMessageResponse? = null,
+    val error: String? = null
+)

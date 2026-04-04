@@ -72,6 +72,7 @@ class CategoryRoutesTest {
             configureSerialization()
             configureStatusPages()
             configureAuth()
+            configureWebSockets()
             configureRouting()
 
             if (seedCategories) {

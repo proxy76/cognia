@@ -9,7 +9,8 @@ import kotlinx.serialization.Serializable
 data class SearchResultsResponse(
     val query: String,
     val results: SearchResultGroups,
-    val nextCursor: String? = null
+    val page: Int = 1,
+    val hasMore: Boolean = false
 )
 
 @Serializable
@@ -48,4 +49,9 @@ data class CreatorSearchResult(
 @Serializable
 data class RecentSearchesResponse(
     val recentSearches: List<String>
+)
+
+@Serializable
+data class SaveSearchRequest(
+    val query: String
 )

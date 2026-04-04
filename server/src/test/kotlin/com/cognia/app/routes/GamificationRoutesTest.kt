@@ -62,6 +62,7 @@ class GamificationRoutesTest {
             configureSerialization()
             configureStatusPages()
             configureAuth()
+            configureWebSockets()
             configureRouting()
 
             // Seed badges for testing

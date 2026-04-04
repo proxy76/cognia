@@ -59,6 +59,7 @@ class AuthRoutesTest {
             configureSerialization()
             configureStatusPages()
             configureAuth()
+            configureWebSockets()
             configureRouting()
         }
 

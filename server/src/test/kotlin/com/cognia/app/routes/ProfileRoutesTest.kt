@@ -57,6 +57,7 @@ class ProfileRoutesTest {
             configureSerialization()
             configureStatusPages()
             configureAuth()
+            configureWebSockets()
             configureRouting()
         }
 

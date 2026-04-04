@@ -1,16 +1,39 @@
 package com.cognia.app.dto.feed
 
-import com.cognia.app.dto.content.VideoResponse
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class FeedItemResponse(
-    val type: String,
-    val video: VideoResponse
+data class FeedItem(
+    val id: String,
+    val title: String,
+    val creatorName: String,
+    val creatorId: String,
+    val thumbnailUrl: String? = null,
+    val categoryName: String,
+    val difficulty: String? = null,
+    val hasQuiz: Boolean = false
 )
 
 @Serializable
 data class FeedResponse(
-    val items: List<FeedItemResponse>,
-    val nextCursor: String? = null
+    val items: List<FeedItem>,
+    val page: Int,
+    val hasMore: Boolean
+)
+
+@Serializable
+data class TrackViewRequest(
+    val contentId: String,
+    val contentType: String = "VIDEO"
+)
+
+@Serializable
+data class TrackShareRequest(
+    val contentId: String,
+    val contentType: String = "VIDEO"
+)
+
+@Serializable
+data class TrackingResponse(
+    val success: Boolean
 )

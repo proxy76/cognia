@@ -73,6 +73,7 @@ class VideoRoutesTest {
             configureSerialization()
             configureStatusPages()
             configureAuth()
+            configureWebSockets()
             configureRouting()
         }
 

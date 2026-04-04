@@ -4,6 +4,11 @@ import com.cognia.app.dto.user.UserSummary
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class FollowStatusResponse(
+    val following: Boolean
+)
+
+@Serializable
 data class FollowerListResponse(
     val followers: List<UserSummary>,
     val nextCursor: String? = null
@@ -16,10 +21,18 @@ data class FollowingListResponse(
 )
 
 @Serializable
-data class FriendRequestCreate(val userId: String)
+data class FriendRequestResponse(
+    val id: String,
+    val requester: UserSummary,
+    val receiver: UserSummary,
+    val status: String,
+    val createdAt: String
+)
 
 @Serializable
-data class FriendRequestAction(val action: String)
+data class PendingRequestsResponse(
+    val requests: List<FriendRequestResponse>
+)
 
 @Serializable
 data class FriendListResponse(

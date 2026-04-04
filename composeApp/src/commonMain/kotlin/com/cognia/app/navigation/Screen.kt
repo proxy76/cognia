@@ -32,5 +32,6 @@ sealed class Screen(val route: String) {
     data object Notifications : Screen("notifications")
     data object Leaderboard : Screen("leaderboard")
     data object CreatorAnalytics : Screen("analytics")
+    data object ModerationDashboard : Screen("moderation")
     data object Settings : Screen("settings")
 }

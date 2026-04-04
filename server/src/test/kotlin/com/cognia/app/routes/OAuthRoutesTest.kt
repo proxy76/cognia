@@ -8,6 +8,7 @@ import com.cognia.app.dto.auth.GoogleOAuthRequest
 import com.cognia.app.plugins.configureAuth
 import com.cognia.app.plugins.configureRouting
 import com.cognia.app.plugins.configureSerialization
+import com.cognia.app.plugins.configureWebSockets
 import com.cognia.app.repository.RefreshTokenRepository
 import com.cognia.app.repository.UserProfileRepository
 import com.cognia.app.repository.UserRepository
@@ -71,6 +72,7 @@ class OAuthRoutesTest {
             DatabaseFactory.init(testDbFile.absolutePath)
             configureSerialization()
             configureAuth()
+            configureWebSockets()
             configureRouting()
         }
 

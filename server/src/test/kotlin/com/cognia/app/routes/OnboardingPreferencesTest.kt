@@ -65,6 +65,7 @@ class OnboardingPreferencesTest {
             configureSerialization()
             configureStatusPages()
             configureAuth()
+            configureWebSockets()
             configureRouting()
 
             categoryService.seedCategories()

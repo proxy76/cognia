@@ -30,6 +30,27 @@ import com.cognia.app.repository.VideoRepository
 import com.cognia.app.repository.BadgeRepository
 import com.cognia.app.service.QuizService
 import com.cognia.app.service.ScoringService
+import com.cognia.app.repository.FeedRepository
+import com.cognia.app.service.FeedService
+import com.cognia.app.service.TrackingService
+import com.cognia.app.service.SearchService
+import com.cognia.app.repository.FollowRepository
+import com.cognia.app.repository.FriendshipRepository
+import com.cognia.app.repository.ChatRepository
+import com.cognia.app.service.FollowService
+import com.cognia.app.service.FriendshipService
+import com.cognia.app.service.ChatService
+import com.cognia.app.repository.NotificationRepository
+import com.cognia.app.service.NotificationService
+import com.cognia.app.service.AnalyticsService
+import com.cognia.app.repository.LicenseRepository
+import com.cognia.app.repository.ModerationRepository
+import com.cognia.app.repository.ReportRepository
+import com.cognia.app.repository.StrikeRepository
+import com.cognia.app.service.LicenseService
+import com.cognia.app.service.ModerationService
+import com.cognia.app.service.ReportService
+import com.cognia.app.service.StrikeService
 import org.koin.dsl.module
 
 // Empty module stubs for each feature area — will be populated as features are implemented
@@ -73,23 +94,35 @@ val quizModule = module {
 }
 
 val feedModule = module {
-    // FeedService, FeedRepository
+    single { FeedRepository() }
+    single { FeedService(get(), get()) }
+    single { TrackingService() }
 }
 
 val socialModule = module {
-    // FollowService, FriendshipService, FollowRepository, FriendshipRepository
+    single { FollowRepository() }
+    single { FollowService(get()) }
+    single { FriendshipRepository() }
+    single { FriendshipService(get()) }
 }
 
 val chatModule = module {
-    // ChatService, ChatRepository
+    single { ChatRepository() }
+    single { ChatService(get(), get()) }
 }
 
 val moderationModule = module {
-    // ModerationService, ModerationRepository, StrikeService
+    single { ModerationRepository() }
+    single { ReportRepository() }
+    single { StrikeRepository() }
+    single { ModerationService(get(), get()) }
+    single { ReportService(get(), get()) }
+    single { StrikeService(get(), get()) }
 }
 
 val licensingModule = module {
-    // LicensingService, LicenseRequestRepository
+    single { LicenseRepository() }
+    single { LicenseService(get(), get()) }
 }
 
 val gamificationModule = module {
@@ -99,15 +132,16 @@ val gamificationModule = module {
 }
 
 val notificationModule = module {
-    // NotificationService, NotificationRepository
+    single { NotificationRepository() }
+    single { NotificationService(get()) }
 }
 
 val analyticsModule = module {
-    // AnalyticsService, AnalyticsRepository
+    single { AnalyticsService() }
 }
 
 val searchModule = module {
-    // SearchService, SearchRepository
+    single { SearchService() }
 }
 
 val allModules = listOf(

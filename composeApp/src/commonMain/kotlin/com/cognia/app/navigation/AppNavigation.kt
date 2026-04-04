@@ -23,7 +23,10 @@ import com.cognia.app.ui.auth.WelcomeScreen
 import com.cognia.app.ui.create.CreateScreen
 import com.cognia.app.ui.reel.ReelPlayerScreen
 import com.cognia.app.ui.reel.ReelViewModel
-import com.cognia.app.ui.screens.ChatListScreen
+import com.cognia.app.ui.chat.ChatConversationScreen
+import com.cognia.app.ui.chat.ChatConversationViewModel
+import com.cognia.app.ui.chat.ChatListScreen as ChatListScreenNew
+import com.cognia.app.ui.chat.ChatListViewModel
 import com.cognia.app.ui.screens.HomeScreen
 import com.cognia.app.ui.onboarding.OnboardingScreen
 import com.cognia.app.ui.onboarding.OnboardingViewModel
@@ -31,7 +34,15 @@ import com.cognia.app.ui.screens.PlaceholderScreen
 import com.cognia.app.ui.quiz.QuizScreen
 import com.cognia.app.ui.profile.ProfileScreen
 import com.cognia.app.ui.profile.ProfileViewModel
-import com.cognia.app.ui.screens.SearchScreen
+import com.cognia.app.ui.feed.FeedScreen
+import com.cognia.app.ui.search.SearchScreenContent
+import com.cognia.app.ui.notification.NotificationScreen
+import com.cognia.app.ui.notification.NotificationViewModel
+import com.cognia.app.ui.analytics.AnalyticsScreen
+import com.cognia.app.ui.analytics.AnalyticsViewModel
+import com.cognia.app.ui.leaderboard.LeaderboardScreen
+import com.cognia.app.ui.leaderboard.LeaderboardViewModel
+import com.cognia.app.ui.moderation.ModerationDashboard
 
 @Composable
 fun AppNavigation() {
@@ -71,10 +82,27 @@ fun AppNavigation() {
             modifier = Modifier.padding(paddingValues),
         ) {
             // Main tabs
-            composable(Screen.Home.route) { HomeScreen() }
-            composable(Screen.Search.route) { SearchScreen() }
+            composable(Screen.Home.route) {
+                FeedScreen(
+                    onNavigateToVideo = { videoId ->
+                        navController.navigate(Screen.ReelPlayer.createRoute(videoId))
+                    },
+                    onNavigateToCreator = { userId ->
+                        navController.navigate(Screen.UserProfile.createRoute(userId))
+                    }
+                )
+            }
+            composable(Screen.Search.route) { SearchScreenContent() }
             composable(Screen.Create.route) { CreateScreen() }
-            composable(Screen.Chat.route) { ChatListScreen() }
+            composable(Screen.Chat.route) {
+                val chatListViewModel: ChatListViewModel = viewModel { ChatListViewModel() }
+                ChatListScreenNew(
+                    viewModel = chatListViewModel,
+                    onConversationClick = { conversationId ->
+                        navController.navigate(Screen.ChatConversation.createRoute(conversationId))
+                    }
+                )
+            }
             composable(Screen.Profile.route) {
                 val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel() }
                 ProfileScreen(viewModel = profileViewModel)
@@ -181,9 +209,41 @@ fun AppNavigation() {
                 )
             }
 
-            // Other screens (placeholder)
-            composable(Screen.Notifications.route) { PlaceholderScreen("Notifications") }
-            composable(Screen.Leaderboard.route) { PlaceholderScreen("Leaderboard") }
+            // Chat conversation
+            composable(Screen.ChatConversation.route) { backStackEntry ->
+                val conversationId = backStackEntry.destination.route
+                    ?.removePrefix("chat/")
+                    ?: ""
+                val chatConversationViewModel: ChatConversationViewModel = viewModel { ChatConversationViewModel() }
+                ChatConversationScreen(
+                    viewModel = chatConversationViewModel,
+                    conversationId = conversationId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Notifications
+            composable(Screen.Notifications.route) {
+                val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel() }
+                NotificationScreen(viewModel = notificationViewModel)
+            }
+
+            // Leaderboard
+            composable(Screen.Leaderboard.route) {
+                val leaderboardViewModel: LeaderboardViewModel = viewModel { LeaderboardViewModel() }
+                LeaderboardScreen(viewModel = leaderboardViewModel)
+            }
+
+            // Creator Analytics
+            composable(Screen.CreatorAnalytics.route) {
+                val analyticsViewModel: AnalyticsViewModel = viewModel { AnalyticsViewModel() }
+                AnalyticsScreen(viewModel = analyticsViewModel)
+            }
+
+            // Moderation Dashboard (web-only)
+            composable(Screen.ModerationDashboard.route) { ModerationDashboard() }
+
+            // Settings (placeholder)
             composable(Screen.Settings.route) { PlaceholderScreen("Settings") }
         }
     }

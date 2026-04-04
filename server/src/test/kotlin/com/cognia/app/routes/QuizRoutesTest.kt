@@ -70,6 +70,7 @@ class QuizRoutesTest {
             configureSerialization()
             configureStatusPages()
             configureAuth()
+            configureWebSockets()
             configureRouting()
         }
 

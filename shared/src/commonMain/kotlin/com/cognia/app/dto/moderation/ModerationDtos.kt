@@ -22,7 +22,26 @@ data class ModerationQueueResponse(
 @Serializable
 data class ModerationDecisionRequest(
     val decision: String,
-    val reason: String? = null
+    val reason: String? = null,
+    val issueStrike: Boolean = false
+)
+
+@Serializable
+data class ModerationReviewResponse(
+    val id: String,
+    val contentId: String,
+    val contentType: String,
+    val moderatorId: String?,
+    val decision: String?,
+    val reason: String?,
+    val isPostPublication: Boolean,
+    val createdAt: String,
+    val decidedAt: String?
+)
+
+@Serializable
+data class ModerationReviewListResponse(
+    val items: List<ModerationReviewResponse>
 )
 
 @Serializable
@@ -33,7 +52,7 @@ data class ReportCreateRequest(
 )
 
 @Serializable
-data class ReportQueueItem(
+data class ReportResponse(
     val id: String,
     val reporterId: String,
     val contentId: String,
@@ -44,14 +63,8 @@ data class ReportQueueItem(
 )
 
 @Serializable
-data class ReportQueueResponse(
-    val items: List<ReportQueueItem>
-)
-
-@Serializable
-data class ReportReviewRequest(
-    val action: String,
-    val reason: String? = null
+data class ReportListResponse(
+    val items: List<ReportResponse>
 )
 
 @Serializable
@@ -61,15 +74,32 @@ data class StrikeCreateRequest(
 )
 
 @Serializable
-data class LicenseRequestResponse(
+data class StrikeResponse(
     val id: String,
-    val creatorId: String,
-    val status: String,
+    val userId: String,
+    val moderatorId: String,
+    val reason: String,
+    val cooldownUntil: String,
     val createdAt: String
 )
 
 @Serializable
-data class LicenseDecisionRequest(
-    val decision: String,
+data class LicenseRequestResponse(
+    val id: String,
+    val creatorId: String,
+    val status: String,
+    val moderatorId: String? = null,
+    val rejectionReason: String? = null,
+    val createdAt: String,
+    val decidedAt: String? = null
+)
+
+@Serializable
+data class LicenseRequestListResponse(
+    val items: List<LicenseRequestResponse>
+)
+
+@Serializable
+data class LicenseRejectRequest(
     val reason: String? = null
 )
