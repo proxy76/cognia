@@ -1,9 +1,13 @@
 package com.cognia.app.ui.profile
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.cognia.app.network.ApiClientProvider
+import com.cognia.app.network.ApiResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class ProfileUiState(
     val isLoading: Boolean = true,
@@ -24,25 +28,47 @@ class ProfileViewModel : ViewModel() {
     private val _state = MutableStateFlow(ProfileUiState())
     val state: StateFlow<ProfileUiState> = _state.asStateFlow()
 
+    private val api get() = ApiClientProvider.client
+
     init {
         loadProfile()
     }
 
     fun loadProfile() {
         _state.value = _state.value.copy(isLoading = true, error = null)
-        // TODO: Wire to actual API call GET /api/v1/users/me
-        // For now, show mock data
-        _state.value = ProfileUiState(
-            isLoading = false,
-            displayName = "Cognia User",
-            role = "LEARNER",
-            level = 1,
-            totalPoints = 0,
-            badgeCount = 0,
-            followerCount = 0,
-            followingCount = 0,
-            friendCount = 0
-        )
+
+        viewModelScope.launch {
+            when (val result = api.getMyProfile()) {
+                is ApiResult.Success -> {
+                    val profile = result.data
+                    _state.value = ProfileUiState(
+                        isLoading = false,
+                        displayName = profile.displayName,
+                        avatarUrl = profile.avatarUrl,
+                        role = profile.role,
+                        level = profile.level,
+                        totalPoints = profile.totalPoints,
+                        badgeCount = profile.badgeCount,
+                        followerCount = profile.followerCount,
+                        followingCount = profile.followingCount,
+                        friendCount = profile.friendCount,
+                        selfDescription = profile.selfDescription
+                    )
+                }
+                is ApiResult.Error -> {
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = result.message
+                    )
+                }
+                is ApiResult.NetworkError -> {
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = "Network error: ${result.throwable.message}"
+                    )
+                }
+            }
+        }
     }
 
     fun retry() {

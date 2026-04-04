@@ -1,9 +1,13 @@
 package com.cognia.app.ui.search
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.cognia.app.network.ApiClientProvider
+import com.cognia.app.network.ApiResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 enum class SearchTab { ALL, VIDEOS, QUIZZES, CREATORS }
 
@@ -26,6 +30,8 @@ data class SearchUiState(
 class SearchViewModel : ViewModel() {
     private val _state = MutableStateFlow(SearchUiState())
     val state: StateFlow<SearchUiState> = _state.asStateFlow()
+
+    private val api get() = ApiClientProvider.client
 
     init {
         loadRecentSearches()
@@ -52,39 +58,71 @@ class SearchViewModel : ViewModel() {
     }
 
     private fun loadRecentSearches() {
-        // TODO: Wire to API
-        _state.value = _state.value.copy(
-            recentSearches = listOf("quantum physics", "python", "guitar", "history")
-        )
+        viewModelScope.launch {
+            when (val result = api.getSearchHistory()) {
+                is ApiResult.Success -> {
+                    _state.value = _state.value.copy(recentSearches = result.data.recentSearches)
+                }
+                is ApiResult.Error, is ApiResult.NetworkError -> {
+                    // Silent fail for recent searches - not critical
+                    _state.value = _state.value.copy(recentSearches = emptyList())
+                }
+            }
+        }
     }
 
     private fun performSearch() {
-        // TODO: Wire to API
-        val query = _state.value.query.lowercase()
+        val query = _state.value.query
         val tab = _state.value.selectedTab
+        _state.value = _state.value.copy(isLoading = true)
 
-        val allResults = listOf(
-            SearchResultItem("v1", "Intro to Quantum Physics", "Dr. Sarah - Science", "video"),
-            SearchResultItem("v2", "History of Rome", "HistoryBuff - History", "video"),
-            SearchResultItem("v3", "Python for Beginners", "CodeAcademy - Technology", "video"),
-            SearchResultItem("q1", "Quantum Physics Quiz", "Multiple Choice - Science", "quiz"),
-            SearchResultItem("q2", "Python Basics Quiz", "Multiple Choice - Technology", "quiz"),
-            SearchResultItem("c1", "Dr. Sarah", "Creator - 1.2K followers", "creator"),
-            SearchResultItem("c2", "CodeAcademy", "Creator - 5K followers", "creator")
-        )
-
-        val filtered = allResults.filter { item ->
-            val matchesQuery = item.title.lowercase().contains(query) ||
-                item.subtitle.lowercase().contains(query)
-            val matchesTab = when (tab) {
-                SearchTab.ALL -> true
-                SearchTab.VIDEOS -> item.type == "video"
-                SearchTab.QUIZZES -> item.type == "quiz"
-                SearchTab.CREATORS -> item.type == "creator"
-            }
-            matchesQuery && matchesTab
+        val typeFilter = when (tab) {
+            SearchTab.ALL -> null
+            SearchTab.VIDEOS -> "video"
+            SearchTab.QUIZZES -> "quiz"
+            SearchTab.CREATORS -> "creator"
         }
 
-        _state.value = _state.value.copy(results = filtered, isLoading = false)
+        viewModelScope.launch {
+            when (val result = api.search(query, typeFilter)) {
+                is ApiResult.Success -> {
+                    val items = mutableListOf<SearchResultItem>()
+                    val groups = result.data.results
+
+                    for (video in groups.videos) {
+                        items.add(SearchResultItem(
+                            id = video.id,
+                            title = video.title,
+                            subtitle = "${video.creator.displayName} - ${video.category.name}",
+                            type = "video"
+                        ))
+                    }
+                    for (quiz in groups.quizzes) {
+                        items.add(SearchResultItem(
+                            id = quiz.id,
+                            title = quiz.title,
+                            subtitle = "${quiz.quizType} - ${quiz.category.name}",
+                            type = "quiz"
+                        ))
+                    }
+                    for (creator in groups.creators) {
+                        items.add(SearchResultItem(
+                            id = creator.id,
+                            title = creator.displayName,
+                            subtitle = "Creator - ${creator.followerCount} followers",
+                            type = "creator"
+                        ))
+                    }
+
+                    _state.value = _state.value.copy(results = items, isLoading = false, error = null)
+                }
+                is ApiResult.Error -> {
+                    _state.value = _state.value.copy(isLoading = false, error = result.message)
+                }
+                is ApiResult.NetworkError -> {
+                    _state.value = _state.value.copy(isLoading = false, error = "Network error")
+                }
+            }
+        }
     }
 }

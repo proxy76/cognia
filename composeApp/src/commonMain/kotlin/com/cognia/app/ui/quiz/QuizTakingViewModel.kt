@@ -1,9 +1,13 @@
 package com.cognia.app.ui.quiz
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.cognia.app.network.ApiClientProvider
+import com.cognia.app.network.ApiResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class QuizTakingState(
     val quizTitle: String = "",
@@ -36,53 +40,41 @@ class QuizTakingViewModel : ViewModel() {
     private val _state = MutableStateFlow(QuizTakingState())
     val state: StateFlow<QuizTakingState> = _state.asStateFlow()
 
+    private val api get() = ApiClientProvider.client
+
     fun loadQuiz(quizId: String) {
         _state.value = _state.value.copy(isLoading = true, error = null)
 
-        // TODO: Wire to actual API using QuizResponse DTO
-        // Mock data for now
-        val mockQuestions = listOf(
-            QuizQuestionItem(
-                id = "q1",
-                questionText = "What is the capital of France?",
-                options = listOf("London", "Berlin", "Paris", "Madrid"),
-                correctIndex = 2
-            ),
-            QuizQuestionItem(
-                id = "q2",
-                questionText = "Which planet is known as the Red Planet?",
-                options = listOf("Venus", "Mars", "Jupiter", "Saturn"),
-                correctIndex = 1
-            ),
-            QuizQuestionItem(
-                id = "q3",
-                questionText = "What is the largest mammal?",
-                options = listOf("Elephant", "Blue Whale", "Giraffe", "Hippopotamus"),
-                correctIndex = 1
-            ),
-            QuizQuestionItem(
-                id = "q4",
-                questionText = "Who painted the Mona Lisa?",
-                options = listOf("Van Gogh", "Picasso", "Da Vinci", "Monet"),
-                correctIndex = 2
-            ),
-            QuizQuestionItem(
-                id = "q5",
-                questionText = "What is the chemical symbol for water?",
-                options = listOf("O2", "CO2", "H2O", "NaCl"),
-                correctIndex = 2
-            )
-        )
-
-        _state.value = _state.value.copy(
-            isLoading = false,
-            quizTitle = "General Knowledge Quiz",
-            questions = mockQuestions,
-            currentQuestionIndex = 0,
-            selectedAnswers = emptyMap(),
-            showFeedback = false,
-            results = null
-        )
+        viewModelScope.launch {
+            when (val result = api.getQuiz(quizId)) {
+                is ApiResult.Success -> {
+                    val quiz = result.data
+                    val questions = quiz.questions.map { q ->
+                        QuizQuestionItem(
+                            id = q.id,
+                            questionText = q.questionText,
+                            options = q.options.map { it.text },
+                            correctIndex = q.correctOptionIndex ?: 0
+                        )
+                    }
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        quizTitle = quiz.title,
+                        questions = questions,
+                        currentQuestionIndex = 0,
+                        selectedAnswers = emptyMap(),
+                        showFeedback = false,
+                        results = null
+                    )
+                }
+                is ApiResult.Error -> {
+                    _state.value = _state.value.copy(isLoading = false, error = result.message)
+                }
+                is ApiResult.NetworkError -> {
+                    _state.value = _state.value.copy(isLoading = false, error = "Network error: ${result.throwable.message}")
+                }
+            }
+        }
     }
 
     fun selectAnswer(questionIndex: Int, optionIndex: Int) {

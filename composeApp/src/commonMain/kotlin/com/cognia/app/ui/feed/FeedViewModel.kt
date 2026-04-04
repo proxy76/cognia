@@ -1,9 +1,13 @@
 package com.cognia.app.ui.feed
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.cognia.app.network.ApiClientProvider
+import com.cognia.app.network.ApiResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 enum class FeedTab { FOR_YOU, DEEP_DIVE }
 
@@ -31,39 +35,60 @@ class FeedViewModel : ViewModel() {
     private val _state = MutableStateFlow(FeedUiState())
     val state: StateFlow<FeedUiState> = _state.asStateFlow()
 
+    private val api get() = ApiClientProvider.client
+
     init {
-        loadMockData()
+        loadFeed()
     }
 
     fun selectTab(tab: FeedTab) {
         _state.value = _state.value.copy(selectedTab = tab, page = 1)
-        loadMockData()
+        loadFeed()
     }
 
-    fun loadMockData() {
+    fun loadFeed() {
         val tab = _state.value.selectedTab
-        val items = when (tab) {
-            FeedTab.FOR_YOU -> listOf(
-                FeedItemUi("v1", "Intro to Quantum Physics", "Dr. Sarah", "u1", null, "Science", "MEDIUM", true),
-                FeedItemUi("v2", "History of Rome", "HistoryBuff", "u2", null, "History", "EASY", false),
-                FeedItemUi("v3", "Learn Guitar Basics", "MusicMaster", "u3", null, "Music", "EASY", true),
-                FeedItemUi("v4", "Python for Beginners", "CodeAcademy", "u4", null, "Technology", "EASY", true),
-                FeedItemUi("v5", "Abstract Art Explained", "ArtLover", "u5", null, "Art", "MEDIUM", false),
-                FeedItemUi("v6", "Cooking Italian Pasta", "ChefMario", "u6", null, "Cooking", null, false)
-            )
-            FeedTab.DEEP_DIVE -> listOf(
-                FeedItemUi("v7", "Advanced Calculus", "MathPro", "u7", null, "Mathematics", "HARD", true),
-                FeedItemUi("v8", "Deep Learning Explained", "AIResearcher", "u8", null, "Technology", "HARD", true),
-                FeedItemUi("v9", "Organic Chemistry", "ChemWiz", "u9", null, "Science", "HARD", false),
-                FeedItemUi("v10", "Philosophy of Mind", "ThinkDeep", "u10", null, "Philosophy", "MEDIUM", true)
-            )
+        val page = _state.value.page
+        _state.value = _state.value.copy(isLoading = true, error = null)
+
+        viewModelScope.launch {
+            val result = when (tab) {
+                FeedTab.FOR_YOU -> api.getForYouFeed(page)
+                FeedTab.DEEP_DIVE -> api.getDeepDiveFeed(page)
+            }
+            when (result) {
+                is ApiResult.Success -> {
+                    val items = result.data.items.map { item ->
+                        FeedItemUi(
+                            id = item.id,
+                            title = item.title,
+                            creatorName = item.creatorName,
+                            creatorId = item.creatorId,
+                            thumbnailUrl = item.thumbnailUrl,
+                            categoryName = item.categoryName,
+                            difficulty = item.difficulty,
+                            hasQuiz = item.hasQuiz
+                        )
+                    }
+                    _state.value = _state.value.copy(
+                        items = items,
+                        isLoading = false,
+                        error = null,
+                        hasMore = result.data.hasMore
+                    )
+                }
+                is ApiResult.Error -> {
+                    _state.value = _state.value.copy(isLoading = false, error = result.message)
+                }
+                is ApiResult.NetworkError -> {
+                    _state.value = _state.value.copy(isLoading = false, error = "Network error: ${result.throwable.message}")
+                }
+            }
         }
-        _state.value = _state.value.copy(items = items, isLoading = false, error = null)
     }
 
     fun refresh() {
-        _state.value = _state.value.copy(isLoading = true)
-        // TODO: Wire to API
-        loadMockData()
+        _state.value = _state.value.copy(page = 1)
+        loadFeed()
     }
 }

@@ -50,6 +50,7 @@ import com.cognia.app.repository.StrikeRepository
 import com.cognia.app.service.LicenseService
 import com.cognia.app.service.ModerationService
 import com.cognia.app.service.ReportService
+import com.cognia.app.service.SeedService
 import com.cognia.app.service.StrikeService
 import org.koin.dsl.module
 
@@ -144,6 +145,10 @@ val searchModule = module {
     single { SearchService() }
 }
 
+val seedModule = module {
+    single { SeedService() }
+}
+
 val allModules = listOf(
     authModule,
     userModule,
@@ -158,5 +163,6 @@ val allModules = listOf(
     gamificationModule,
     notificationModule,
     analyticsModule,
-    searchModule
+    searchModule,
+    seedModule
 )

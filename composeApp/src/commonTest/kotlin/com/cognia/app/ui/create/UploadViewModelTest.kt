@@ -1,5 +1,7 @@
 package com.cognia.app.ui.create
 
+import com.cognia.app.network.ApiClientProvider
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -7,6 +9,11 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class UploadViewModelTest {
+
+    @BeforeTest
+    fun setup() {
+        ApiClientProvider.init("http://localhost:99999")
+    }
 
     @Test
     fun initialStateHasEmptyFields() {
@@ -177,19 +184,13 @@ class UploadViewModelTest {
         val viewModel = UploadViewModel()
         viewModel.selectFile("video.mp4")
         viewModel.updateTitle("Title")
-        viewModel.upload() // no category error since category is set... wait, it's not
-
-        // Actually let's test properly
-        val viewModel2 = UploadViewModel()
-        viewModel2.selectFile("video.mp4")
-        viewModel2.updateTitle("Title")
         // Don't select category
-        viewModel2.upload()
+        viewModel.upload()
 
-        assertEquals("Please select a category", viewModel2.state.value.categoryError)
+        assertEquals("Please select a category", viewModel.state.value.categoryError)
 
-        viewModel2.selectCategory("2")
+        viewModel.selectCategory("2")
 
-        assertNull(viewModel2.state.value.categoryError)
+        assertNull(viewModel.state.value.categoryError)
     }
 }

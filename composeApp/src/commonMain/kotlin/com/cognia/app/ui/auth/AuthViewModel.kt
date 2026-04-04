@@ -1,9 +1,13 @@
 package com.cognia.app.ui.auth
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.cognia.app.network.ApiClientProvider
+import com.cognia.app.network.ApiResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class AuthUiState(
     val email: String = "",
@@ -26,6 +30,8 @@ data class AuthSuccessData(
 class AuthViewModel : ViewModel() {
     private val _state = MutableStateFlow(AuthUiState())
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
+
+    private val api get() = ApiClientProvider.client
 
     fun updateEmail(email: String) {
         _state.value = _state.value.copy(email = email, emailError = null, error = null)
@@ -71,16 +77,33 @@ class AuthViewModel : ViewModel() {
 
         _state.value = current.copy(isLoading = true, error = null)
 
-        // TODO: Wire to actual API call via repository/use case
-        // For now, simulate success after validation passes
-        _state.value = _state.value.copy(
-            isLoading = false,
-            authSuccess = AuthSuccessData(
-                userId = "pending",
-                token = "pending",
-                isNewUser = true
-            )
-        )
+        viewModelScope.launch {
+            when (val result = api.register(current.email, current.password, current.displayName)) {
+                is ApiResult.Success -> {
+                    ApiClientProvider.tokenStorage.setTokens(result.data.token, result.data.refreshToken)
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        authSuccess = AuthSuccessData(
+                            userId = result.data.userId,
+                            token = result.data.token,
+                            isNewUser = true
+                        )
+                    )
+                }
+                is ApiResult.Error -> {
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = result.message
+                    )
+                }
+                is ApiResult.NetworkError -> {
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = "Network error: ${result.throwable.message}"
+                    )
+                }
+            }
+        }
     }
 
     fun login() {
@@ -106,15 +129,33 @@ class AuthViewModel : ViewModel() {
 
         _state.value = current.copy(isLoading = true, error = null)
 
-        // TODO: Wire to actual API call
-        _state.value = _state.value.copy(
-            isLoading = false,
-            authSuccess = AuthSuccessData(
-                userId = "pending",
-                token = "pending",
-                isNewUser = false
-            )
-        )
+        viewModelScope.launch {
+            when (val result = api.login(current.email, current.password)) {
+                is ApiResult.Success -> {
+                    ApiClientProvider.tokenStorage.setTokens(result.data.token, result.data.refreshToken)
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        authSuccess = AuthSuccessData(
+                            userId = result.data.userId,
+                            token = result.data.token,
+                            isNewUser = false
+                        )
+                    )
+                }
+                is ApiResult.Error -> {
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = result.message
+                    )
+                }
+                is ApiResult.NetworkError -> {
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = "Network error: ${result.throwable.message}"
+                    )
+                }
+            }
+        }
     }
 
     fun clearState() {

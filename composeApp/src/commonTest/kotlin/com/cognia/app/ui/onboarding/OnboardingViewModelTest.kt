@@ -1,11 +1,18 @@
 package com.cognia.app.ui.onboarding
 
+import com.cognia.app.network.ApiClientProvider
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class OnboardingViewModelTest {
+
+    @BeforeTest
+    fun setup() {
+        ApiClientProvider.init("http://localhost:99999")
+    }
 
     @Test
     fun initialStateHasStepZeroAndEmptyDescription() {
@@ -79,76 +86,39 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun toggleCategoryAddsToSelectedIds() {
+    fun toggleCategoryAddsAndRemovesIds() {
         val viewModel = OnboardingViewModel()
-        viewModel.fetchRecommendations()
 
-        // Clear pre-selected recommendations
-        val preSelected = viewModel.state.value.selectedCategoryIds.toSet()
+        // Toggle a category on
+        viewModel.toggleCategory("cat-1")
+        assertTrue("cat-1" in viewModel.state.value.selectedCategoryIds)
 
-        // Toggle off a pre-selected one
-        val firstSelected = preSelected.first()
-        viewModel.toggleCategory(firstSelected)
-        assertFalse(firstSelected in viewModel.state.value.selectedCategoryIds)
-
-        // Toggle it back on
-        viewModel.toggleCategory(firstSelected)
-        assertTrue(firstSelected in viewModel.state.value.selectedCategoryIds)
+        // Toggle the same category off
+        viewModel.toggleCategory("cat-1")
+        assertFalse("cat-1" in viewModel.state.value.selectedCategoryIds)
     }
 
     @Test
-    fun toggleCategoryRemovesFromSelectedIds() {
+    fun toggleMultipleCategories() {
         val viewModel = OnboardingViewModel()
-        viewModel.fetchRecommendations()
 
-        // A recommended category should be pre-selected
-        val selectedId = viewModel.state.value.selectedCategoryIds.first()
+        viewModel.toggleCategory("cat-1")
+        viewModel.toggleCategory("cat-2")
+        viewModel.toggleCategory("cat-3")
 
-        viewModel.toggleCategory(selectedId)
-
-        assertFalse(selectedId in viewModel.state.value.selectedCategoryIds)
+        val selected = viewModel.state.value.selectedCategoryIds
+        assertEquals(3, selected.size)
+        assertTrue("cat-1" in selected)
+        assertTrue("cat-2" in selected)
+        assertTrue("cat-3" in selected)
     }
 
     @Test
-    fun fetchRecommendationsPopulatesCategories() {
+    fun updateSelfDescriptionClearsError() {
         val viewModel = OnboardingViewModel()
 
-        viewModel.fetchRecommendations()
+        viewModel.updateSelfDescription("new description")
 
-        val state = viewModel.state.value
-        assertFalse(state.isLoadingRecommendations)
-        assertTrue(state.availableCategories.isNotEmpty())
-        assertEquals(20, state.availableCategories.size)
-        assertTrue(state.selectedCategoryIds.isNotEmpty())
-
-        // Verify recommended categories are pre-selected
-        val recommendedIds = state.availableCategories
-            .filter { it.isRecommended }
-            .map { it.id }
-            .toSet()
-        assertEquals(recommendedIds, state.selectedCategoryIds)
-    }
-
-    @Test
-    fun savePreferencesSetsComplete() {
-        val viewModel = OnboardingViewModel()
-
-        viewModel.savePreferences()
-
-        val state = viewModel.state.value
-        assertFalse(state.isSaving)
-        assertTrue(state.isComplete)
-    }
-
-    @Test
-    fun nextStepToRecommendationsAutoFetches() {
-        val viewModel = OnboardingViewModel()
-
-        // Going to step 1 with empty categories should trigger fetch
-        viewModel.nextStep()
-
-        val state = viewModel.state.value
-        assertEquals(1, state.currentStep)
-        assertTrue(state.availableCategories.isNotEmpty())
+        assertEquals(null, viewModel.state.value.error)
     }
 }

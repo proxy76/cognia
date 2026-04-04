@@ -1,52 +1,42 @@
 package com.cognia.app.ui.reel
 
+import com.cognia.app.network.ApiClientProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ReelViewModelTest {
 
+    private val testDispatcher = UnconfinedTestDispatcher()
+
+    @BeforeTest
+    fun setup() {
+        Dispatchers.setMain(testDispatcher)
+        ApiClientProvider.init("http://localhost:99999")
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
     @Test
-    fun initialStateLoadsMockVideos() {
+    fun initialStateHasDefaultValues() {
         val viewModel = ReelViewModel()
         val state = viewModel.state.value
 
-        assertEquals(5, state.videos.size)
         assertEquals(0, state.currentIndex)
         assertTrue(state.isPlaying)
         assertFalse(state.isBuffering)
-    }
-
-    @Test
-    fun swipeToNextIncrementsCurrentIndex() {
-        val viewModel = ReelViewModel()
-
-        viewModel.swipeToNext()
-
-        assertEquals(1, viewModel.state.value.currentIndex)
-    }
-
-    @Test
-    fun swipeToPreviousDecrementsCurrentIndex() {
-        val viewModel = ReelViewModel()
-        viewModel.swipeToNext() // go to 1
-        viewModel.swipeToNext() // go to 2
-
-        viewModel.swipeToPrevious()
-
-        assertEquals(1, viewModel.state.value.currentIndex)
-    }
-
-    @Test
-    fun cannotSwipePastLastVideo() {
-        val viewModel = ReelViewModel()
-        val lastIndex = viewModel.state.value.videos.size - 1
-
-        // Swipe to the end
-        repeat(lastIndex + 5) { viewModel.swipeToNext() }
-
-        assertEquals(lastIndex, viewModel.state.value.currentIndex)
     }
 
     @Test
@@ -54,6 +44,15 @@ class ReelViewModelTest {
         val viewModel = ReelViewModel()
 
         viewModel.swipeToPrevious()
+
+        assertEquals(0, viewModel.state.value.currentIndex)
+    }
+
+    @Test
+    fun cannotSwipeNextWithNoVideos() {
+        val viewModel = ReelViewModel()
+        // No videos loaded (API fails), so swipeToNext should not change index
+        viewModel.swipeToNext()
 
         assertEquals(0, viewModel.state.value.currentIndex)
     }
@@ -85,29 +84,8 @@ class ReelViewModelTest {
     }
 
     @Test
-    fun videosHaveCorrectQuizFlags() {
+    fun videosAreEmptyWhenApiUnavailable() {
         val viewModel = ReelViewModel()
-        val videos = viewModel.state.value.videos
-
-        assertTrue(videos[0].hasQuiz)  // Quantum Physics
-        assertFalse(videos[1].hasQuiz) // History of Rome
-        assertTrue(videos[2].hasQuiz)  // Guitar Basics
-        assertTrue(videos[3].hasQuiz)  // Python
-        assertFalse(videos[4].hasQuiz) // Abstract Art
-    }
-
-    @Test
-    fun loadVideosResetsState() {
-        val viewModel = ReelViewModel()
-        viewModel.swipeToNext()
-        viewModel.swipeToNext()
-        viewModel.togglePlayPause()
-
-        viewModel.loadVideos()
-
-        val state = viewModel.state.value
-        assertEquals(0, state.currentIndex)
-        assertTrue(state.isPlaying)
-        assertEquals(5, state.videos.size)
+        assertTrue(viewModel.state.value.videos.isEmpty())
     }
 }

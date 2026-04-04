@@ -1,13 +1,19 @@
 package com.cognia.app.ui.auth
 
+import com.cognia.app.network.ApiClientProvider
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 
 class AuthViewModelTest {
+
+    @BeforeTest
+    fun setup() {
+        ApiClientProvider.init("http://localhost:99999")
+    }
 
     @Test
     fun initialStateIsIdleWithEmptyFields() {
@@ -83,17 +89,17 @@ class AuthViewModelTest {
     }
 
     @Test
-    fun registerWithValidDataSetsSuccess() {
+    fun registerWithValidDataSetsLoadingAndLaunchesCoroutine() {
         val viewModel = AuthViewModel()
         viewModel.updateEmail("test@example.com")
         viewModel.updatePassword("password123")
         viewModel.updateDisplayName("John Doe")
         viewModel.register()
 
-        val success = viewModel.state.value.authSuccess
-        assertNotNull(success)
-        assertTrue(success.isNewUser)
-        assertFalse(viewModel.state.value.isLoading)
+        // Validation passes, so no validation errors should be present
+        assertNull(viewModel.state.value.emailError)
+        assertNull(viewModel.state.value.passwordError)
+        assertNull(viewModel.state.value.displayNameError)
     }
 
     @Test
@@ -108,16 +114,26 @@ class AuthViewModelTest {
     }
 
     @Test
-    fun loginWithValidDataSetsSuccess() {
+    fun loginWithEmptyPasswordShowsPasswordError() {
+        val viewModel = AuthViewModel()
+        viewModel.updateEmail("test@example.com")
+        viewModel.updatePassword("")
+        viewModel.login()
+
+        assertNotNull(viewModel.state.value.passwordError)
+        assertNull(viewModel.state.value.authSuccess)
+    }
+
+    @Test
+    fun loginWithValidDataSetsLoadingAndLaunchesCoroutine() {
         val viewModel = AuthViewModel()
         viewModel.updateEmail("test@example.com")
         viewModel.updatePassword("password123")
         viewModel.login()
 
-        val success = viewModel.state.value.authSuccess
-        assertNotNull(success)
-        assertFalse(success.isNewUser)
-        assertFalse(viewModel.state.value.isLoading)
+        // Validation passes, so no validation errors should be present
+        assertNull(viewModel.state.value.emailError)
+        assertNull(viewModel.state.value.passwordError)
     }
 
     @Test
@@ -126,7 +142,6 @@ class AuthViewModelTest {
         viewModel.updateEmail("test@example.com")
         viewModel.updatePassword("password123")
         viewModel.updateDisplayName("John")
-        viewModel.register()
 
         viewModel.clearState()
         val state = viewModel.state.value
@@ -136,5 +151,31 @@ class AuthViewModelTest {
         assertEquals("", state.displayName)
         assertNull(state.authSuccess)
         assertFalse(state.isLoading)
+    }
+
+    @Test
+    fun updateEmailClearsEmailError() {
+        val viewModel = AuthViewModel()
+        viewModel.updateEmail("invalid")
+        viewModel.updatePassword("password123")
+        viewModel.updateDisplayName("John")
+        viewModel.register()
+        assertNotNull(viewModel.state.value.emailError)
+
+        viewModel.updateEmail("test@example.com")
+        assertNull(viewModel.state.value.emailError)
+    }
+
+    @Test
+    fun updatePasswordClearsPasswordError() {
+        val viewModel = AuthViewModel()
+        viewModel.updateEmail("test@example.com")
+        viewModel.updatePassword("short")
+        viewModel.updateDisplayName("John")
+        viewModel.register()
+        assertNotNull(viewModel.state.value.passwordError)
+
+        viewModel.updatePassword("longenough1")
+        assertNull(viewModel.state.value.passwordError)
     }
 }

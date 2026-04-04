@@ -1,9 +1,13 @@
 package com.cognia.app.ui.onboarding
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.cognia.app.network.ApiClientProvider
+import com.cognia.app.network.ApiResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class CategoryItem(
     val id: String,
@@ -25,6 +29,8 @@ data class OnboardingUiState(
 class OnboardingViewModel : ViewModel() {
     private val _state = MutableStateFlow(OnboardingUiState())
     val state: StateFlow<OnboardingUiState> = _state.asStateFlow()
+
+    private val api get() = ApiClientProvider.client
 
     fun updateSelfDescription(text: String) {
         _state.value = _state.value.copy(selfDescription = text, error = null)
@@ -50,39 +56,55 @@ class OnboardingViewModel : ViewModel() {
     fun fetchRecommendations() {
         _state.value = _state.value.copy(isLoadingRecommendations = true, error = null)
 
-        // TODO: Wire to actual API call using RecommendRequest/RecommendResponse DTOs
-        // For now, simulate with mock data
-        val mockCategories = listOf(
-            CategoryItem("1", "Science", isRecommended = true),
-            CategoryItem("2", "Mathematics", isRecommended = true),
-            CategoryItem("3", "Technology", isRecommended = true),
-            CategoryItem("4", "Art", isRecommended = true),
-            CategoryItem("5", "Music", isRecommended = true),
-            CategoryItem("6", "History", isRecommended = false),
-            CategoryItem("7", "Literature", isRecommended = false),
-            CategoryItem("8", "Physics", isRecommended = true),
-            CategoryItem("9", "Chemistry", isRecommended = false),
-            CategoryItem("10", "Biology", isRecommended = false),
-            CategoryItem("11", "Computer Science", isRecommended = true),
-            CategoryItem("12", "Psychology", isRecommended = false),
-            CategoryItem("13", "Philosophy", isRecommended = false),
-            CategoryItem("14", "Economics", isRecommended = false),
-            CategoryItem("15", "Languages", isRecommended = false),
-            CategoryItem("16", "Health", isRecommended = false),
-            CategoryItem("17", "Geography", isRecommended = false),
-            CategoryItem("18", "Engineering", isRecommended = true),
-            CategoryItem("19", "Business", isRecommended = false),
-            CategoryItem("20", "Environment", isRecommended = false)
-        )
+        viewModelScope.launch {
+            // Try AI recommendations first, fall back to loading all categories
+            val selfDesc = _state.value.selfDescription
+            val recommendedIds = mutableSetOf<String>()
 
-        // Pre-select recommended categories
-        val recommendedIds = mockCategories.filter { it.isRecommended }.map { it.id }.toSet()
+            if (selfDesc.isNotBlank()) {
+                when (val recResult = api.getRecommendations(selfDesc)) {
+                    is ApiResult.Success -> {
+                        recommendedIds.addAll(recResult.data.recommendedCategories.map { it.id })
+                    }
+                    else -> { /* Fall back to showing all categories without recommendations */ }
+                }
+            }
 
-        _state.value = _state.value.copy(
-            isLoadingRecommendations = false,
-            availableCategories = mockCategories,
-            selectedCategoryIds = recommendedIds
-        )
+            // Always load the full category list
+            when (val catResult = api.getCategories()) {
+                is ApiResult.Success -> {
+                    val categories = catResult.data.map { cat ->
+                        CategoryItem(
+                            id = cat.id,
+                            name = cat.name,
+                            isRecommended = cat.id in recommendedIds
+                        )
+                    }
+                    val preSelected = if (recommendedIds.isNotEmpty()) {
+                        recommendedIds
+                    } else {
+                        emptySet()
+                    }
+                    _state.value = _state.value.copy(
+                        isLoadingRecommendations = false,
+                        availableCategories = categories,
+                        selectedCategoryIds = preSelected
+                    )
+                }
+                is ApiResult.Error -> {
+                    _state.value = _state.value.copy(
+                        isLoadingRecommendations = false,
+                        error = "Failed to load categories: ${catResult.message}"
+                    )
+                }
+                is ApiResult.NetworkError -> {
+                    _state.value = _state.value.copy(
+                        isLoadingRecommendations = false,
+                        error = "Network error loading categories"
+                    )
+                }
+            }
+        }
     }
 
     fun toggleCategory(id: String) {
@@ -98,11 +120,20 @@ class OnboardingViewModel : ViewModel() {
     fun savePreferences() {
         _state.value = _state.value.copy(isSaving = true, error = null)
 
-        // TODO: Wire to actual API call using SavePreferencesRequest DTO
-        // For now, simulate success
-        _state.value = _state.value.copy(
-            isSaving = false,
-            isComplete = true
-        )
+        viewModelScope.launch {
+            val categoryIds = _state.value.selectedCategoryIds.toList()
+            val selfDesc = _state.value.selfDescription.ifBlank { null }
+            when (val result = api.savePreferences(categoryIds, selfDesc)) {
+                is ApiResult.Success -> {
+                    _state.value = _state.value.copy(isSaving = false, isComplete = true)
+                }
+                is ApiResult.Error -> {
+                    _state.value = _state.value.copy(isSaving = false, error = result.message)
+                }
+                is ApiResult.NetworkError -> {
+                    _state.value = _state.value.copy(isSaving = false, error = "Network error saving preferences")
+                }
+            }
+        }
     }
 }

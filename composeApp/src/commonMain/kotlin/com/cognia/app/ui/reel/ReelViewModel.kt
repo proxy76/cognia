@@ -1,9 +1,13 @@
 package com.cognia.app.ui.reel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.cognia.app.network.ApiClientProvider
+import com.cognia.app.network.ApiResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class ReelUiState(
     val currentIndex: Int = 0,
@@ -27,21 +31,37 @@ class ReelViewModel : ViewModel() {
     private val _state = MutableStateFlow(ReelUiState())
     val state: StateFlow<ReelUiState> = _state.asStateFlow()
 
+    private val api get() = ApiClientProvider.client
+
     init {
         loadVideos()
     }
 
     fun loadVideos() {
-        // TODO: Wire to API
-        _state.value = ReelUiState(
-            videos = listOf(
-                VideoItem("1", "Intro to Quantum Physics", "Dr. Sarah", "u1", null, null, true),
-                VideoItem("2", "History of Rome", "HistoryBuff", "u2", null, null, false),
-                VideoItem("3", "Learn Guitar Basics", "MusicMaster", "u3", null, null, true),
-                VideoItem("4", "Python for Beginners", "CodeAcademy", "u4", null, null, true),
-                VideoItem("5", "Abstract Art Explained", "ArtLover", "u5", null, null, false)
-            )
-        )
+        viewModelScope.launch {
+            when (val result = api.getForYouFeed(page = 1, limit = 20)) {
+                is ApiResult.Success -> {
+                    val videos = result.data.items.map { item ->
+                        VideoItem(
+                            id = item.id,
+                            title = item.title,
+                            creatorName = item.creatorName,
+                            creatorId = item.creatorId,
+                            videoUrl = null, // Video streaming URL would come from video detail
+                            thumbnailUrl = item.thumbnailUrl,
+                            hasQuiz = item.hasQuiz
+                        )
+                    }
+                    _state.value = ReelUiState(videos = videos)
+                }
+                is ApiResult.Error -> {
+                    _state.value = _state.value.copy(error = result.message)
+                }
+                is ApiResult.NetworkError -> {
+                    _state.value = _state.value.copy(error = "Network error: ${result.throwable.message}")
+                }
+            }
+        }
     }
 
     fun swipeToNext() {

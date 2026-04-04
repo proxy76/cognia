@@ -7,6 +7,7 @@ import com.cognia.app.config.AppConfig
 import com.cognia.app.plugins.*
 import com.cognia.app.service.BadgeService
 import com.cognia.app.service.CategoryService
+import com.cognia.app.service.SeedService
 import org.koin.ktor.ext.inject
 
 fun main() {
@@ -38,4 +39,7 @@ private fun Application.seedData() {
 
     val badgeService by inject<BadgeService>()
     badgeService.seedBadges()
+
+    val seedService by inject<SeedService>()
+    seedService.seedDevData()
 }

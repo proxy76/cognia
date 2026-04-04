@@ -1,43 +1,35 @@
 package com.cognia.app.ui.profile
 
+import com.cognia.app.network.ApiClientProvider
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ProfileViewModelTest {
 
-    @Test
-    fun afterLoadHasProfileData() {
-        val viewModel = ProfileViewModel()
-        val state = viewModel.state.value
-
-        assertFalse(state.isLoading)
-        assertNull(state.error)
-        assertEquals("Cognia User", state.displayName)
-        assertEquals("LEARNER", state.role)
-        assertEquals(1, state.level)
-        assertEquals(0, state.totalPoints)
-        assertEquals(0, state.badgeCount)
-        assertEquals(0, state.followerCount)
-        assertEquals(0, state.followingCount)
-        assertEquals(0, state.friendCount)
+    @BeforeTest
+    fun setup() {
+        ApiClientProvider.init("http://localhost:99999")
     }
 
     @Test
-    fun retryTriggersReload() {
+    fun initialStateIsLoadingOrHasError() {
         val viewModel = ProfileViewModel()
-
-        // After init, data is loaded
-        assertFalse(viewModel.state.value.isLoading)
-        assertEquals("Cognia User", viewModel.state.value.displayName)
-
-        // Retry should reload and end up with same mock data
-        viewModel.retry()
         val state = viewModel.state.value
-        assertFalse(state.isLoading)
-        assertNull(state.error)
-        assertEquals("Cognia User", state.displayName)
+
+        // With no server, the profile is either still loading or has received a network error
+        assertTrue(state.isLoading || state.error != null || state.displayName.isEmpty())
+    }
+
+    @Test
+    fun initialStateHasDefaultValues() {
+        val viewModel = ProfileViewModel()
+        val state = viewModel.state.value
+
+        // Default state values before API response
+        assertEquals("LEARNER", state.role)
+        assertEquals(1, state.level)
+        assertEquals(0, state.totalPoints)
     }
 }

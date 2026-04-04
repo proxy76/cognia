@@ -1,9 +1,16 @@
 package com.cognia.app.ui.quiz
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.cognia.app.network.ApiClientProvider
+import com.cognia.app.network.ApiResult
+import com.cognia.app.dto.quiz.CreateQuizRequest
+import com.cognia.app.dto.quiz.CreateQuestionRequest
+import com.cognia.app.dto.quiz.CreateOptionRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class QuizCreationState(
     val title: String = "",
@@ -32,20 +39,33 @@ class QuizCreationViewModel : ViewModel() {
     private val _state = MutableStateFlow(QuizCreationState())
     val state: StateFlow<QuizCreationState> = _state.asStateFlow()
 
-    val categories = listOf(
-        QuizCategoryOption("1", "Science"),
-        QuizCategoryOption("2", "Mathematics"),
-        QuizCategoryOption("3", "Technology"),
-        QuizCategoryOption("4", "Art"),
-        QuizCategoryOption("5", "Music"),
-        QuizCategoryOption("6", "History"),
-        QuizCategoryOption("7", "Literature"),
-        QuizCategoryOption("8", "Computer Science")
-    )
+    private val api get() = ApiClientProvider.client
+
+    private var _categoriesList: List<QuizCategoryOption> = emptyList()
+    val categories: List<QuizCategoryOption> get() = _categoriesList
 
     val quizTypes = listOf("MULTIPLE_CHOICE", "TRUE_FALSE", "FILL_IN_BLANK")
 
     val difficulties = listOf("EASY", "MEDIUM", "HARD")
+
+    init {
+        loadCategories()
+    }
+
+    private fun loadCategories() {
+        viewModelScope.launch {
+            when (val result = api.getCategories()) {
+                is ApiResult.Success -> {
+                    _categoriesList = result.data.map { QuizCategoryOption(it.id, it.name) }
+                    // Touch state to trigger recomposition so categories become visible
+                    _state.value = _state.value.copy(error = _state.value.error)
+                }
+                else -> {
+                    // Categories will be empty until network is available
+                }
+            }
+        }
+    }
 
     fun updateTitle(title: String) {
         _state.value = _state.value.copy(
@@ -124,14 +144,12 @@ class QuizCreationViewModel : ViewModel() {
     fun nextStep() {
         val current = _state.value
         if (current.currentStep == 0) {
-            // Validate metadata
             if (current.title.isBlank()) {
                 _state.value = current.copy(titleError = "Title is required")
                 return
             }
         }
         if (current.currentStep == 1) {
-            // Validate questions
             val validationError = validateQuestions(current.questions)
             if (validationError != null) {
                 _state.value = current.copy(questionsError = validationError)
@@ -166,12 +184,32 @@ class QuizCreationViewModel : ViewModel() {
 
         _state.value = current.copy(isSubmitting = true, error = null)
 
-        // TODO: Wire to actual API using QuizCreateRequest DTO
-        // Simulate success
-        _state.value = _state.value.copy(
-            isSubmitting = false,
-            submitSuccess = true
-        )
+        viewModelScope.launch {
+            val request = CreateQuizRequest(
+                title = current.title,
+                quizType = current.selectedQuizType,
+                categoryId = current.selectedCategoryId ?: "",
+                difficulty = current.selectedDifficulty,
+                questions = current.questions.map { q ->
+                    CreateQuestionRequest(
+                        questionText = q.questionText,
+                        correctOptionIndex = q.correctOptionIndex,
+                        options = q.options.filter { it.isNotBlank() }.map { CreateOptionRequest(it) }
+                    )
+                }
+            )
+            when (val result = api.createQuiz(request)) {
+                is ApiResult.Success -> {
+                    _state.value = _state.value.copy(isSubmitting = false, submitSuccess = true)
+                }
+                is ApiResult.Error -> {
+                    _state.value = _state.value.copy(isSubmitting = false, error = result.message)
+                }
+                is ApiResult.NetworkError -> {
+                    _state.value = _state.value.copy(isSubmitting = false, error = "Network error")
+                }
+            }
+        }
     }
 
     private fun validateQuestions(questions: List<EditableQuestion>): String? {
