@@ -10,24 +10,30 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cognia.app.ui.theme.NeonPurple
+import com.cognia.app.ui.theme.NeonPurpleBright
+import com.cognia.app.ui.theme.SurfaceDarkCard
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -51,7 +57,8 @@ fun ConfirmationScreen(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back"
+                    contentDescription = "Back",
+                    tint = NeonPurple,
                 )
             }
         }
@@ -66,7 +73,9 @@ fun ConfirmationScreen(
 
             Text(
                 text = "Your Selected Categories",
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -85,10 +94,18 @@ fun ConfirmationScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 selectedCategories.forEach { category ->
-                    SuggestionChip(
-                        onClick = {},
-                        label = { Text(category.name) }
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = NeonPurple.copy(alpha = 0.15f),
+                    ) {
+                        Text(
+                            text = category.name,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = NeonPurpleBright,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        )
+                    }
                 }
             }
 
@@ -97,21 +114,21 @@ fun ConfirmationScreen(
             // Self description preview
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                colors = CardDefaults.cardColors(containerColor = SurfaceDarkCard),
+                shape = MaterialTheme.shapes.medium,
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = "About You",
                         style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = selfDescription,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -123,15 +140,25 @@ fun ConfirmationScreen(
                 enabled = !isSaving,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp)
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = NeonPurple,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                shape = MaterialTheme.shapes.medium,
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(
                         color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(24.dp),
                     )
                 } else {
-                    Text("Get Started", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Get Started",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
                 }
             }
 

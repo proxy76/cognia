@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,9 +23,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,7 +35,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cognia.app.ui.theme.NeonPurple
+import com.cognia.app.ui.theme.NeonPurpleDark
+import com.cognia.app.ui.theme.SurfaceDarkCard
+import com.cognia.app.ui.theme.SurfaceDarkElevated
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,14 +64,25 @@ fun ChatConversationScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text(state.participantName) },
+                title = {
+                    Text(
+                        state.participantName,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = NeonPurple,
+                ),
             )
         },
         bottomBar = {
@@ -81,7 +100,7 @@ fun ChatConversationScreen(
                     modifier = Modifier.fillMaxSize().padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = NeonPurple)
                 }
             }
             state.messages.isEmpty() -> {
@@ -117,14 +136,14 @@ private fun MessageBubble(message: ChatMessageUi) {
     val isMe = message.isMe
     val alignment = if (isMe) Alignment.End else Alignment.Start
     val backgroundColor = if (isMe) {
-        MaterialTheme.colorScheme.primary
+        NeonPurpleDark
     } else {
-        MaterialTheme.colorScheme.surfaceVariant
+        SurfaceDarkCard
     }
     val textColor = if (isMe) {
         MaterialTheme.colorScheme.onPrimary
     } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
+        MaterialTheme.colorScheme.onSurface
     }
 
     Column(
@@ -134,9 +153,16 @@ private fun MessageBubble(message: ChatMessageUi) {
         Box(
             modifier = Modifier
                 .widthIn(max = 280.dp)
-                .clip(RoundedCornerShape(16.dp))
+                .clip(
+                    RoundedCornerShape(
+                        topStart = 16.dp,
+                        topEnd = 16.dp,
+                        bottomStart = if (isMe) 16.dp else 4.dp,
+                        bottomEnd = if (isMe) 4.dp else 16.dp,
+                    )
+                )
                 .background(backgroundColor)
-                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
             when (message.messageType) {
                 "SHARED_POST" -> {
@@ -144,12 +170,12 @@ private fun MessageBubble(message: ChatMessageUi) {
                         Text(
                             text = "Shared ${message.sharedContentType ?: "content"}",
                             style = MaterialTheme.typography.labelSmall,
-                            color = textColor
+                            color = textColor.copy(alpha = 0.7f),
                         )
                         Text(
                             text = message.sharedContentId ?: "",
                             style = MaterialTheme.typography.bodySmall,
-                            color = textColor
+                            color = textColor,
                         )
                     }
                 }
@@ -157,7 +183,7 @@ private fun MessageBubble(message: ChatMessageUi) {
                     Text(
                         text = message.textContent ?: "",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = textColor
+                        color = textColor,
                     )
                 }
             }
@@ -165,7 +191,7 @@ private fun MessageBubble(message: ChatMessageUi) {
         Text(
             text = message.createdAt,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             modifier = Modifier.padding(top = 2.dp, start = 4.dp, end = 4.dp)
         )
     }
@@ -179,29 +205,48 @@ private fun MessageInput(
     isSending: Boolean
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedTextField(
             value = text,
             onValueChange = onTextChange,
             modifier = Modifier.weight(1f),
-            placeholder = { Text("Type a message...") },
+            placeholder = {
+                Text(
+                    "Type a message...",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                )
+            },
             maxLines = 4,
-            shape = RoundedCornerShape(24.dp)
+            shape = RoundedCornerShape(24.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = NeonPurple,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                cursorColor = NeonPurple,
+                focusedContainerColor = SurfaceDarkElevated,
+                unfocusedContainerColor = SurfaceDarkElevated,
+            ),
         )
         IconButton(
             onClick = onSend,
             enabled = text.isNotBlank() && !isSending
         ) {
             if (isSending) {
-                CircularProgressIndicator(modifier = Modifier.padding(4.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = NeonPurple,
+                    strokeWidth = 2.dp,
+                )
             } else {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Send,
                     contentDescription = "Send",
-                    tint = if (text.isNotBlank()) MaterialTheme.colorScheme.primary
-                           else MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = if (text.isNotBlank()) NeonPurple
+                           else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
                 )
             }
         }

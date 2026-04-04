@@ -17,8 +17,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cognia.app.ui.theme.NeonCyan
+import com.cognia.app.ui.theme.NeonPurple
+import com.cognia.app.ui.theme.NeonPurpleBright
+import com.cognia.app.ui.theme.NeonPurpleDark
+import com.cognia.app.ui.theme.SurfaceDarkCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,14 +33,28 @@ fun LeaderboardScreen(viewModel: LeaderboardViewModel) {
     val state by viewModel.state.collectAsState()
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Leaderboard") },
+                title = {
+                    Text(
+                        "Leaderboard",
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
                 actions = {
                     IconButton(onClick = { viewModel.retry() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                ),
             )
         }
     ) { paddingValues ->
@@ -45,7 +66,8 @@ fun LeaderboardScreen(viewModel: LeaderboardViewModel) {
             when {
                 state.isLoading -> {
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
+                        color = NeonPurple,
                     )
                 }
                 state.error != null -> {
@@ -59,7 +81,10 @@ fun LeaderboardScreen(viewModel: LeaderboardViewModel) {
                             color = MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = { viewModel.retry() }) {
+                        Button(
+                            onClick = { viewModel.retry() },
+                            colors = ButtonDefaults.buttonColors(containerColor = NeonPurple),
+                        ) {
                             Text("Retry")
                         }
                     }
@@ -73,7 +98,7 @@ fun LeaderboardScreen(viewModel: LeaderboardViewModel) {
                             Icons.Default.Leaderboard,
                             contentDescription = null,
                             modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = NeonPurple.copy(alpha = 0.4f),
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
@@ -87,7 +112,7 @@ fun LeaderboardScreen(viewModel: LeaderboardViewModel) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         items(state.entries, key = { it.userId }) { entry ->
                             LeaderboardEntryRow(entry)
@@ -103,13 +128,23 @@ fun LeaderboardScreen(viewModel: LeaderboardViewModel) {
 private fun LeaderboardEntryRow(entry: LeaderboardEntry) {
     val isTopThree = entry.rank <= 3
 
+    val trophyColor = when (entry.rank) {
+        1 -> Color(0xFFFFD700)
+        2 -> Color(0xFFC0C0C0)
+        3 -> Color(0xFFCD7F32)
+        else -> NeonPurple
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = if (isTopThree) {
-            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-        } else {
-            CardDefaults.cardColors()
-        }
+        colors = CardDefaults.cardColors(
+            containerColor = if (isTopThree) {
+                NeonPurple.copy(alpha = 0.08f)
+            } else {
+                SurfaceDarkCard
+            }
+        ),
+        shape = MaterialTheme.shapes.medium,
     ) {
         Row(
             modifier = Modifier
@@ -123,11 +158,7 @@ private fun LeaderboardEntryRow(entry: LeaderboardEntry) {
                     Icons.Default.EmojiEvents,
                     contentDescription = "Rank ${entry.rank}",
                     modifier = Modifier.size(32.dp),
-                    tint = when (entry.rank) {
-                        1 -> MaterialTheme.colorScheme.primary
-                        2 -> MaterialTheme.colorScheme.secondary
-                        else -> MaterialTheme.colorScheme.tertiary
-                    }
+                    tint = trophyColor,
                 )
             } else {
                 Box(
@@ -137,7 +168,8 @@ private fun LeaderboardEntryRow(entry: LeaderboardEntry) {
                     Text(
                         text = "#${entry.rank}",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -149,13 +181,16 @@ private fun LeaderboardEntryRow(entry: LeaderboardEntry) {
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .background(
+                        Brush.linearGradient(listOf(NeonPurple, NeonPurpleDark))
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Default.Person,
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp),
+                    tint = MaterialTheme.colorScheme.onPrimary,
                 )
             }
 
@@ -166,12 +201,13 @@ private fun LeaderboardEntryRow(entry: LeaderboardEntry) {
                 Text(
                     text = entry.displayName,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = "Level ${entry.level}",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = NeonCyan.copy(alpha = 0.7f),
                 )
             }
 
@@ -180,12 +216,13 @@ private fun LeaderboardEntryRow(entry: LeaderboardEntry) {
                 Text(
                     text = entry.totalPoints.toString(),
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = NeonPurpleBright,
                 )
                 Text(
                     text = "pts",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

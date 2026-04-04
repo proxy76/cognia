@@ -1,5 +1,6 @@
 package com.cognia.app.ui.chat
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,8 +27,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.cognia.app.ui.theme.NeonPurple
+import com.cognia.app.ui.theme.NeonPurpleBright
+import com.cognia.app.ui.theme.NeonPurpleDark
 
 @Composable
 fun ChatListScreen(
@@ -39,7 +45,7 @@ fun ChatListScreen(
     when {
         state.isLoading -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = NeonPurple)
             }
         }
         state.error != null -> {
@@ -55,7 +61,8 @@ fun ChatListScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "No conversations yet",
-                        style = MaterialTheme.typography.headlineSmall
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
                         text = "Start chatting with your friends",
@@ -73,7 +80,10 @@ fun ChatListScreen(
                         conversation = conversation,
                         onClick = { onConversationClick(conversation.id) }
                     )
-                    HorizontalDivider()
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                        modifier = Modifier.padding(start = 76.dp),
+                    )
                 }
             }
         }
@@ -89,20 +99,33 @@ private fun ConversationItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = Icons.Default.Person,
-            contentDescription = null,
-            modifier = Modifier.size(48.dp).clip(CircleShape),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        // Avatar with gradient background
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.linearGradient(listOf(NeonPurple, NeonPurpleDark))
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = null,
+                modifier = Modifier.size(26.dp),
+                tint = MaterialTheme.colorScheme.onPrimary,
+            )
+        }
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = conversation.participantName,
                 style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -121,7 +144,7 @@ private fun ConversationItem(
             Text(
                 text = conversation.lastMessageAt,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = NeonPurple.copy(alpha = 0.6f),
             )
         }
     }

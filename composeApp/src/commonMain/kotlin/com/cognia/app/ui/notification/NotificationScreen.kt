@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DoneAll
@@ -24,6 +25,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.cognia.app.ui.theme.NeonPurple
+import com.cognia.app.ui.theme.NeonPurpleBright
+import com.cognia.app.ui.theme.SurfaceDarkCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,19 +35,37 @@ fun NotificationScreen(viewModel: NotificationViewModel) {
     val state by viewModel.state.collectAsState()
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Notifications") },
+                title = {
+                    Text(
+                        "Notifications",
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
                 actions = {
                     if (state.unreadCount > 0) {
                         IconButton(onClick = { viewModel.markAllAsRead() }) {
-                            Icon(Icons.Default.DoneAll, contentDescription = "Mark all as read")
+                            Icon(
+                                Icons.Default.DoneAll,
+                                contentDescription = "Mark all as read",
+                                tint = NeonPurple,
+                            )
                         }
                     }
                     IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                ),
             )
         }
     ) { paddingValues ->
@@ -55,7 +77,8 @@ fun NotificationScreen(viewModel: NotificationViewModel) {
             when {
                 state.isLoading -> {
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
+                        color = NeonPurple,
                     )
                 }
                 state.error != null -> {
@@ -69,7 +92,10 @@ fun NotificationScreen(viewModel: NotificationViewModel) {
                             color = MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = { viewModel.refresh() }) {
+                        Button(
+                            onClick = { viewModel.refresh() },
+                            colors = ButtonDefaults.buttonColors(containerColor = NeonPurple),
+                        ) {
                             Text("Retry")
                         }
                     }
@@ -83,7 +109,7 @@ fun NotificationScreen(viewModel: NotificationViewModel) {
                             Icons.Default.Notifications,
                             contentDescription = null,
                             modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = NeonPurple.copy(alpha = 0.4f),
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
@@ -94,9 +120,7 @@ fun NotificationScreen(viewModel: NotificationViewModel) {
                     }
                 }
                 else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize()
-                    ) {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(state.notifications, key = { it.id }) { notification ->
                             NotificationItemRow(
                                 notification = notification,
@@ -120,9 +144,9 @@ private fun NotificationItemRow(
     onClick: () -> Unit
 ) {
     val backgroundColor = if (!notification.read) {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+        NeonPurple.copy(alpha = 0.06f)
     } else {
-        MaterialTheme.colorScheme.surface
+        MaterialTheme.colorScheme.background
     }
 
     Row(
@@ -130,15 +154,15 @@ private fun NotificationItemRow(
             .fillMaxWidth()
             .background(backgroundColor)
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.Top
     ) {
         Icon(
             imageVector = iconForType(notification.type),
             contentDescription = null,
             modifier = Modifier.size(24.dp),
-            tint = if (!notification.read) MaterialTheme.colorScheme.primary
-                   else MaterialTheme.colorScheme.onSurfaceVariant
+            tint = if (!notification.read) NeonPurple
+                   else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
@@ -146,6 +170,7 @@ private fun NotificationItemRow(
                 text = notification.title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = if (!notification.read) FontWeight.Bold else FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -161,7 +186,7 @@ private fun NotificationItemRow(
             Text(
                 text = notification.createdAt,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             )
         }
         if (!notification.read) {
@@ -169,14 +194,11 @@ private fun NotificationItemRow(
             Box(
                 modifier = Modifier
                     .size(8.dp)
-                    .background(
-                        MaterialTheme.colorScheme.primary,
-                        shape = MaterialTheme.shapes.small
-                    )
+                    .background(NeonPurple, shape = CircleShape)
             )
         }
     }
-    HorizontalDivider()
+    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
 }
 
 private fun iconForType(type: String): ImageVector = when (type) {

@@ -9,13 +9,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cognia.app.ui.theme.NeonPurple
+import com.cognia.app.ui.theme.NeonPurpleBright
 
 @Composable
 fun SelfDescriptionScreen(
@@ -34,7 +39,9 @@ fun SelfDescriptionScreen(
 
         Text(
             text = "Tell us about yourself",
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -42,7 +49,7 @@ fun SelfDescriptionScreen(
         Text(
             text = "What are you interested in learning? This helps us recommend the best categories for you.",
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -54,7 +61,14 @@ fun SelfDescriptionScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp),
-            maxLines = 10
+            maxLines = 10,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = NeonPurple,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                cursorColor = NeonPurple,
+                focusedLabelColor = NeonPurple,
+            ),
+            shape = MaterialTheme.shapes.small,
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -64,9 +78,18 @@ fun SelfDescriptionScreen(
             enabled = selfDescription.isNotBlank(),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp)
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = NeonPurple,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ),
+            shape = MaterialTheme.shapes.medium,
         ) {
-            Text("Continue", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Continue",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))

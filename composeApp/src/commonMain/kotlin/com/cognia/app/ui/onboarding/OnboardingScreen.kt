@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.cognia.app.ui.theme.NeonPurple
+import com.cognia.app.ui.theme.NeonPurpleBright
 
 @Composable
 fun OnboardingScreen(
@@ -45,7 +49,7 @@ fun OnboardingScreen(
             currentStep = state.currentStep,
             totalSteps = 3,
             modifier = Modifier
-                .padding(top = 16.dp)
+                .padding(top = 20.dp)
                 .align(Alignment.CenterHorizontally)
         )
 
@@ -104,16 +108,18 @@ private fun StepIndicator(
         verticalAlignment = Alignment.CenterVertically
     ) {
         repeat(totalSteps) { index ->
-            val color = if (index <= currentStep) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.outlineVariant
-            }
+            val isActive = index <= currentStep
             Box(
                 modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(color)
+                    .then(
+                        if (index == currentStep) Modifier.width(24.dp).height(10.dp)
+                        else Modifier.size(10.dp)
+                    )
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(
+                        if (isActive) NeonPurple
+                        else NeonPurple.copy(alpha = 0.2f)
+                    )
             )
         }
     }

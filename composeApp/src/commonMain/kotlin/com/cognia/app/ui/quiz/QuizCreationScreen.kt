@@ -19,12 +19,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,15 +34,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,6 +57,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cognia.app.ui.theme.NeonCyan
+import com.cognia.app.ui.theme.NeonPurple
+import com.cognia.app.ui.theme.NeonPurpleBright
+import com.cognia.app.ui.theme.SurfaceDarkCard
+
+private val CorrectGreen = Color(0xFF4CAF50)
 
 @Composable
 fun QuizCreationScreen(
@@ -75,7 +84,7 @@ fun QuizCreationScreen(
             currentStep = state.currentStep,
             totalSteps = 3,
             modifier = Modifier
-                .padding(top = 16.dp)
+                .padding(top = 20.dp)
                 .align(Alignment.CenterHorizontally)
         )
 
@@ -126,20 +135,30 @@ private fun StepIndicator(
         verticalAlignment = Alignment.CenterVertically
     ) {
         repeat(totalSteps) { index ->
-            val color = if (index <= currentStep) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.outlineVariant
-            }
+            val isActive = index <= currentStep
             Box(
                 modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(color)
+                    .then(
+                        if (index == currentStep) Modifier.width(24.dp).height(10.dp)
+                        else Modifier.size(10.dp)
+                    )
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(
+                        if (isActive) NeonPurple
+                        else NeonPurple.copy(alpha = 0.2f)
+                    )
             )
         }
     }
 }
+
+@Composable
+private fun cogniaTextFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = NeonPurple,
+    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+    cursorColor = NeonPurple,
+    focusedLabelColor = NeonPurple,
+)
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -157,12 +176,12 @@ private fun MetadataStep(
         Text(
             text = "Create Quiz",
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Title
         OutlinedTextField(
             value = state.title,
             onValueChange = viewModel::updateTitle,
@@ -170,21 +189,21 @@ private fun MetadataStep(
             modifier = Modifier.fillMaxWidth(),
             isError = state.titleError != null,
             supportingText = state.titleError?.let { { Text(it) } },
-            singleLine = true
+            singleLine = true,
+            colors = cogniaTextFieldColors(),
+            shape = MaterialTheme.shapes.small,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Quiz type chips
         Text(
             text = "Quiz Type",
             style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(modifier = Modifier.height(8.dp))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             viewModel.quizTypes.forEach { type ->
                 FilterChip(
                     selected = state.selectedQuizType == type,
@@ -195,18 +214,24 @@ private fun MetadataStep(
                                 .lowercase()
                                 .replaceFirstChar { it.uppercase() }
                         )
-                    }
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = NeonPurple.copy(alpha = 0.2f),
+                        selectedLabelColor = NeonPurpleBright,
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        labelColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Category dropdown
         Text(
             text = "Category",
             style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -223,6 +248,8 @@ private fun MetadataStep(
                 readOnly = true,
                 label = { Text("Select Category") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
+                colors = cogniaTextFieldColors(),
+                shape = MaterialTheme.shapes.small,
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
@@ -245,16 +272,14 @@ private fun MetadataStep(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Difficulty chips
         Text(
             text = "Difficulty",
             style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(modifier = Modifier.height(8.dp))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             viewModel.difficulties.forEach { difficulty ->
                 FilterChip(
                     selected = state.selectedDifficulty == difficulty,
@@ -264,7 +289,13 @@ private fun MetadataStep(
                             difficulty.lowercase()
                                 .replaceFirstChar { it.uppercase() }
                         )
-                    }
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = NeonCyan.copy(alpha = 0.15f),
+                        selectedLabelColor = NeonCyan,
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        labelColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                 )
             }
         }
@@ -274,7 +305,7 @@ private fun MetadataStep(
             Text(
                 text = errorText,
                 color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
             )
         }
 
@@ -282,9 +313,14 @@ private fun MetadataStep(
 
         Button(
             onClick = onNext,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = NeonPurple),
+            shape = MaterialTheme.shapes.medium,
         ) {
-            Text("Next: Add Questions")
+            Text(
+                "Next: Add Questions",
+                fontWeight = FontWeight.SemiBold,
+            )
         }
     }
 }
@@ -305,7 +341,8 @@ private fun QuestionsStep(
         Text(
             text = "Add Questions",
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -329,11 +366,12 @@ private fun QuestionsStep(
 
         OutlinedButton(
             onClick = viewModel::addQuestion,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
         ) {
-            Icon(Icons.Filled.Add, contentDescription = null)
+            Icon(Icons.Filled.Add, contentDescription = null, tint = NeonPurple)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Add Question")
+            Text("Add Question", color = NeonPurple)
         }
 
         state.questionsError?.let { errorText ->
@@ -341,7 +379,7 @@ private fun QuestionsStep(
             Text(
                 text = errorText,
                 color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
             )
         }
 
@@ -353,15 +391,18 @@ private fun QuestionsStep(
         ) {
             OutlinedButton(
                 onClick = onBack,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).height(52.dp),
+                shape = MaterialTheme.shapes.medium,
             ) {
                 Text("Back")
             }
             Button(
                 onClick = onNext,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).height(52.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = NeonPurple),
+                shape = MaterialTheme.shapes.medium,
             ) {
-                Text("Next: Preview")
+                Text("Next: Preview", fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -379,9 +420,8 @@ private fun QuestionCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
+        colors = CardDefaults.cardColors(containerColor = SurfaceDarkCard),
+        shape = MaterialTheme.shapes.medium,
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -392,14 +432,15 @@ private fun QuestionCard(
                 Text(
                     text = "Question ${questionIndex + 1}",
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = NeonPurpleBright,
                 )
                 if (canDelete) {
                     IconButton(onClick = onDelete) {
                         Icon(
                             Icons.Filled.Delete,
                             contentDescription = "Delete question",
-                            tint = MaterialTheme.colorScheme.error
+                            tint = MaterialTheme.colorScheme.error,
                         )
                     }
                 }
@@ -410,7 +451,9 @@ private fun QuestionCard(
                 onValueChange = onQuestionTextChanged,
                 label = { Text("Question text") },
                 modifier = Modifier.fillMaxWidth(),
-                minLines = 2
+                minLines = 2,
+                colors = cogniaTextFieldColors(),
+                shape = MaterialTheme.shapes.small,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -418,7 +461,7 @@ private fun QuestionCard(
             Text(
                 text = "Options (select correct answer):",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -432,14 +475,20 @@ private fun QuestionCard(
                 ) {
                     RadioButton(
                         selected = question.correctOptionIndex == optionIndex,
-                        onClick = { onCorrectOptionSelected(optionIndex) }
+                        onClick = { onCorrectOptionSelected(optionIndex) },
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = NeonCyan,
+                            unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
                     )
                     OutlinedTextField(
                         value = optionText,
                         onValueChange = { onOptionTextChanged(optionIndex, it) },
                         label = { Text("Option ${optionIndex + 1}") },
                         modifier = Modifier.weight(1f),
-                        singleLine = true
+                        singleLine = true,
+                        colors = cogniaTextFieldColors(),
+                        shape = MaterialTheme.shapes.small,
                     )
                 }
             }
@@ -463,7 +512,8 @@ private fun PreviewStep(
         Text(
             text = "Preview",
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -472,32 +522,34 @@ private fun PreviewStep(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            )
+                containerColor = NeonPurple.copy(alpha = 0.08f)
+            ),
+            shape = MaterialTheme.shapes.medium,
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = state.title.ifBlank { "Untitled Quiz" },
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Type: ${state.selectedQuizType.replace("_", " ")}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (state.selectedDifficulty != null) {
                     Text(
                         text = "Difficulty: ${state.selectedDifficulty}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 Text(
                     text = "${state.questions.size} question(s)",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = NeonCyan.copy(alpha = 0.7f),
                 )
             }
         }
@@ -509,27 +561,25 @@ private fun PreviewStep(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp)
+                    .padding(vertical = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = SurfaceDarkCard),
+                shape = MaterialTheme.shapes.small,
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = "Q${index + 1}: ${question.questionText.ifBlank { "(empty)" }}",
                         style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     question.options.forEachIndexed { optIndex, optText ->
-                        val prefix = if (optIndex == question.correctOptionIndex) "* " else "  "
-                        val color = if (optIndex == question.correctOptionIndex) {
-                            Color(0xFF4CAF50)
-                        } else {
-                            MaterialTheme.colorScheme.onSurface
-                        }
+                        val isCorrect = optIndex == question.correctOptionIndex
                         Text(
-                            text = "$prefix${optText.ifBlank { "(empty)" }}",
+                            text = "${if (isCorrect) "* " else "  "}${optText.ifBlank { "(empty)" }}",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = color,
-                            modifier = Modifier.padding(start = 8.dp, top = 2.dp)
+                            color = if (isCorrect) CorrectGreen else MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(start = 8.dp, top = 2.dp),
                         )
                     }
                 }
@@ -541,7 +591,7 @@ private fun PreviewStep(
             Text(
                 text = errorText,
                 color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
             )
         }
 
@@ -553,23 +603,27 @@ private fun PreviewStep(
         ) {
             OutlinedButton(
                 onClick = onBack,
-                modifier = Modifier.weight(1f),
-                enabled = !isSubmitting
+                modifier = Modifier.weight(1f).height(52.dp),
+                enabled = !isSubmitting,
+                shape = MaterialTheme.shapes.medium,
             ) {
                 Text("Back")
             }
             Button(
                 onClick = onSubmit,
-                modifier = Modifier.weight(1f),
-                enabled = !isSubmitting
+                modifier = Modifier.weight(1f).height(52.dp),
+                enabled = !isSubmitting,
+                colors = ButtonDefaults.buttonColors(containerColor = NeonPurple),
+                shape = MaterialTheme.shapes.medium,
             ) {
                 if (isSubmitting) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
-                    Text("Publish Quiz")
+                    Text("Publish Quiz", fontWeight = FontWeight.SemiBold)
                 }
             }
         }

@@ -15,7 +15,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cognia.app.ui.theme.NeonCyan
+import com.cognia.app.ui.theme.NeonPurple
+import com.cognia.app.ui.theme.NeonPurpleBright
+import com.cognia.app.ui.theme.SurfaceDarkCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,14 +28,28 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
     val state by viewModel.state.collectAsState()
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Creator Analytics") },
+                title = {
+                    Text(
+                        "Creator Analytics",
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
                 actions = {
                     IconButton(onClick = { viewModel.retry() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                ),
             )
         }
     ) { paddingValues ->
@@ -42,7 +61,8 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
             when {
                 state.isLoading -> {
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
+                        color = NeonPurple,
                     )
                 }
                 state.error != null -> {
@@ -56,7 +76,10 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
                             color = MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = { viewModel.retry() }) {
+                        Button(
+                            onClick = { viewModel.retry() },
+                            colors = ButtonDefaults.buttonColors(containerColor = NeonPurple),
+                        ) {
                             Text("Retry")
                         }
                     }
@@ -70,7 +93,9 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
                         item {
                             Text(
                                 text = "Overview",
-                                style = MaterialTheme.typography.titleLarge
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
                         }
                         item {
@@ -106,7 +131,9 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = "Per-Video Stats",
-                                    style = MaterialTheme.typography.titleLarge
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
                             }
                             items(state.videoStats) { video ->
@@ -127,7 +154,11 @@ private fun StatCard(
     label: String,
     value: String
 ) {
-    Card(modifier = modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = SurfaceDarkCard),
+        shape = MaterialTheme.shapes.medium,
+    ) {
         Column(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -136,17 +167,19 @@ private fun StatCard(
                 icon,
                 contentDescription = null,
                 modifier = Modifier.size(32.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = NeonPurple,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = NeonPurpleBright,
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -154,7 +187,11 @@ private fun StatCard(
 
 @Composable
 private fun VideoStatRow(video: VideoStats) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = SurfaceDarkCard),
+        shape = MaterialTheme.shapes.medium,
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -164,19 +201,23 @@ private fun VideoStatRow(video: VideoStats) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = video.title,
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = video.viewCount.toString(),
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = NeonCyan,
                 )
                 Text(
                     text = "views",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

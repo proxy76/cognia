@@ -12,12 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -25,12 +26,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cognia.app.ui.theme.NeonCyan
+import com.cognia.app.ui.theme.NeonPurple
+import com.cognia.app.ui.theme.NeonPurpleBright
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -55,7 +58,8 @@ fun CategoryRecommendationScreen(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back"
+                    contentDescription = "Back",
+                    tint = NeonPurple,
                 )
             }
         }
@@ -66,7 +70,7 @@ fun CategoryRecommendationScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = NeonPurple)
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Finding categories for you...",
@@ -86,7 +90,9 @@ fun CategoryRecommendationScreen(
 
                 Text(
                     text = "Recommended for You",
-                    style = MaterialTheme.typography.headlineMedium
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -106,7 +112,8 @@ fun CategoryRecommendationScreen(
                     Text(
                         text = "Recommended",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        color = NeonPurpleBright,
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -131,9 +138,18 @@ fun CategoryRecommendationScreen(
                                     }
                                 } else null,
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
+                                    selectedContainerColor = NeonPurple.copy(alpha = 0.2f),
+                                    selectedLabelColor = NeonPurpleBright,
+                                    selectedLeadingIconColor = NeonPurple,
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurface,
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = selected,
+                                    borderColor = MaterialTheme.colorScheme.outline,
+                                    selectedBorderColor = NeonPurple.copy(alpha = 0.5f),
+                                ),
                             )
                         }
                     }
@@ -145,7 +161,8 @@ fun CategoryRecommendationScreen(
                     Text(
                         text = "Add More",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -168,7 +185,20 @@ fun CategoryRecommendationScreen(
                                             modifier = Modifier.size(FilterChipDefaults.IconSize)
                                         )
                                     }
-                                } else null
+                                } else null,
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = NeonCyan.copy(alpha = 0.15f),
+                                    selectedLabelColor = NeonCyan,
+                                    selectedLeadingIconColor = NeonCyan,
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurface,
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = selected,
+                                    borderColor = MaterialTheme.colorScheme.outline,
+                                    selectedBorderColor = NeonCyan.copy(alpha = 0.5f),
+                                ),
                             )
                         }
                     }
@@ -181,11 +211,17 @@ fun CategoryRecommendationScreen(
                     enabled = selectedCategoryIds.isNotEmpty(),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = NeonPurple,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
+                    shape = MaterialTheme.shapes.medium,
                 ) {
                     Text(
                         text = "Continue (${selectedCategoryIds.size} selected)",
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
                     )
                 }
 

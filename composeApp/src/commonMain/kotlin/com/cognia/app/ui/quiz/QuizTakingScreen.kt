@@ -11,9 +11,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -31,6 +33,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.cognia.app.ui.theme.NeonCyan
+import com.cognia.app.ui.theme.NeonPurple
+import com.cognia.app.ui.theme.NeonPurpleBright
+import com.cognia.app.ui.theme.SurfaceDarkCard
+
+private val CorrectGreen = Color(0xFF4CAF50)
+private val IncorrectRed = Color(0xFFF44336)
 
 @Composable
 fun QuizTakingScreen(
@@ -47,7 +56,7 @@ fun QuizTakingScreen(
     when {
         state.isLoading -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = NeonPurple)
             }
         }
         state.error != null -> {
@@ -55,10 +64,13 @@ fun QuizTakingScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = state.error ?: "Unknown error",
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.colorScheme.error,
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { viewModel.loadQuiz(quizId) }) {
+                    Button(
+                        onClick = { viewModel.loadQuiz(quizId) },
+                        colors = ButtonDefaults.buttonColors(containerColor = NeonPurple),
+                    ) {
                         Text("Retry")
                     }
                 }
@@ -108,18 +120,21 @@ private fun QuizQuestionContent(
             ) {
                 Text(
                     text = state.quizTitle,
-                    style = MaterialTheme.typography.titleSmall
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = "Question ${state.currentQuestionIndex + 1} of ${state.questions.size}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = NeonPurple.copy(alpha = 0.7f),
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier.fillMaxWidth(),
+                color = NeonPurple,
+                trackColor = NeonPurple.copy(alpha = 0.15f),
             )
         }
 
@@ -129,7 +144,8 @@ private fun QuizQuestionContent(
         Text(
             text = question.questionText,
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -139,18 +155,18 @@ private fun QuizQuestionContent(
             val isSelected = selectedOption == index
             val backgroundColor by animateColorAsState(
                 targetValue = when {
-                    state.showFeedback && index == question.correctIndex -> Color(0xFF4CAF50).copy(alpha = 0.2f)
-                    state.showFeedback && isSelected && index != question.correctIndex -> Color(0xFFF44336).copy(alpha = 0.2f)
-                    isSelected -> MaterialTheme.colorScheme.primaryContainer
-                    else -> MaterialTheme.colorScheme.surface
+                    state.showFeedback && index == question.correctIndex -> CorrectGreen.copy(alpha = 0.15f)
+                    state.showFeedback && isSelected && index != question.correctIndex -> IncorrectRed.copy(alpha = 0.15f)
+                    isSelected -> NeonPurple.copy(alpha = 0.12f)
+                    else -> SurfaceDarkCard
                 }
             )
             val borderColor by animateColorAsState(
                 targetValue = when {
-                    state.showFeedback && index == question.correctIndex -> Color(0xFF4CAF50)
-                    state.showFeedback && isSelected && index != question.correctIndex -> Color(0xFFF44336)
-                    isSelected -> MaterialTheme.colorScheme.primary
-                    else -> MaterialTheme.colorScheme.outlineVariant
+                    state.showFeedback && index == question.correctIndex -> CorrectGreen
+                    state.showFeedback && isSelected && index != question.correctIndex -> IncorrectRed
+                    isSelected -> NeonPurple
+                    else -> MaterialTheme.colorScheme.outline
                 }
             )
 
@@ -165,12 +181,14 @@ private fun QuizQuestionContent(
                 border = BorderStroke(
                     width = if (isSelected || (state.showFeedback && index == question.correctIndex)) 2.dp else 1.dp,
                     color = borderColor
-                )
+                ),
+                shape = MaterialTheme.shapes.small,
             ) {
                 Text(
                     text = option,
                     modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
         }
@@ -179,11 +197,10 @@ private fun QuizQuestionContent(
 
         // Action button
         if (state.showFeedback) {
-            // Feedback text
             Text(
                 text = if (state.isCorrect) "Correct!" else "Incorrect! The answer is: ${question.options[question.correctIndex]}",
                 style = MaterialTheme.typography.titleMedium,
-                color = if (state.isCorrect) Color(0xFF4CAF50) else Color(0xFFF44336),
+                color = if (state.isCorrect) CorrectGreen else IncorrectRed,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center
@@ -191,20 +208,28 @@ private fun QuizQuestionContent(
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = onNextQuestion,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = NeonPurple),
+                shape = MaterialTheme.shapes.medium,
             ) {
                 Text(
                     if (state.currentQuestionIndex < state.questions.size - 1) "Next Question"
-                    else "See Results"
+                    else "See Results",
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
         } else {
             Button(
                 onClick = onSubmitAnswer,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = selectedOption != null
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                enabled = selectedOption != null,
+                colors = ButtonDefaults.buttonColors(containerColor = NeonPurple),
+                shape = MaterialTheme.shapes.medium,
             ) {
-                Text("Submit Answer")
+                Text(
+                    "Submit Answer",
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         }
     }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -24,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,11 +35,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.cognia.app.ui.theme.NeonPurple
+import com.cognia.app.ui.theme.NeonPurpleBright
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,9 +55,15 @@ fun RegisterScreen(
     var passwordVisible by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Create Account") },
+                title = {
+                    Text(
+                        "Create Account",
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -59,7 +71,12 @@ fun RegisterScreen(
                             contentDescription = "Back"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    navigationIconContentColor = NeonPurple,
+                ),
             )
         }
     ) { paddingValues ->
@@ -67,7 +84,7 @@ fun RegisterScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -83,6 +100,8 @@ fun RegisterScreen(
                 },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                colors = cogniaTextFieldColors(),
+                shape = MaterialTheme.shapes.small,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -101,6 +120,8 @@ fun RegisterScreen(
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Next
                 ),
+                colors = cogniaTextFieldColors(),
+                shape = MaterialTheme.shapes.small,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -128,6 +149,8 @@ fun RegisterScreen(
                         )
                     }
                 },
+                colors = cogniaTextFieldColors(),
+                shape = MaterialTheme.shapes.small,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -140,29 +163,43 @@ fun RegisterScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             Button(
                 onClick = { viewModel.register() },
                 enabled = !state.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp)
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = NeonPurple,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(
                         color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(22.dp),
                     )
                 } else {
-                    Text("Create Account", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Create Account",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             TextButton(onClick = onNavigateToLogin) {
-                Text("Already have an account? Log in")
+                Text(
+                    "Already have an account? Log in",
+                    color = NeonPurpleBright.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
         }
     }
