@@ -6,6 +6,8 @@ import com.cognia.app.routes.oauthRoutes
 import com.cognia.app.routes.onboardingRoutes
 import com.cognia.app.routes.profileRoutes
 import com.cognia.app.routes.recommendationRoutes
+import com.cognia.app.routes.videoRoutes
+import com.cognia.app.routes.videoStreamRoutes
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -21,5 +23,7 @@ fun Application.configureRouting() {
         categoryRoutes()
         onboardingRoutes()
         recommendationRoutes()
+        videoRoutes()
+        videoStreamRoutes()
     }
 }

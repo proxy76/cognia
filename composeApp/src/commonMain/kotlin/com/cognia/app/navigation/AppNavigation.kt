@@ -20,8 +20,10 @@ import com.cognia.app.ui.auth.AuthViewModel
 import com.cognia.app.ui.auth.LoginScreen
 import com.cognia.app.ui.auth.RegisterScreen
 import com.cognia.app.ui.auth.WelcomeScreen
+import com.cognia.app.ui.create.CreateScreen
+import com.cognia.app.ui.reel.ReelPlayerScreen
+import com.cognia.app.ui.reel.ReelViewModel
 import com.cognia.app.ui.screens.ChatListScreen
-import com.cognia.app.ui.screens.CreateScreen
 import com.cognia.app.ui.screens.HomeScreen
 import com.cognia.app.ui.onboarding.OnboardingScreen
 import com.cognia.app.ui.onboarding.OnboardingViewModel
@@ -148,6 +150,21 @@ fun AppNavigation() {
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Onboarding.route) { inclusive = true }
                         }
+                    }
+                )
+            }
+
+            // Reel player
+            composable(Screen.ReelPlayer.route) { backStackEntry ->
+                val reelViewModel: ReelViewModel = viewModel { ReelViewModel() }
+                ReelPlayerScreen(
+                    viewModel = reelViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToCreator = { userId ->
+                        navController.navigate(Screen.UserProfile.createRoute(userId))
+                    },
+                    onNavigateToQuiz = { videoId ->
+                        navController.navigate(Screen.QuizScreen.createRoute(videoId))
                     }
                 )
             }

@@ -9,6 +9,7 @@ enum class ContentStatus {
     APPROVED,
     REJECTED,
     PUBLISHED,
+    ARCHIVED,
     PENDING_POST_REVIEW,
     DELETED
 }

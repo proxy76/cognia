@@ -18,6 +18,11 @@ import com.cognia.app.service.AnthropicRecommendationClient
 import com.cognia.app.service.OAuthService
 import com.cognia.app.service.OnboardingService
 import com.cognia.app.service.RecommendationClient
+import com.cognia.app.service.FfmpegVideoProcessingService
+import com.cognia.app.service.VideoProcessingQueue
+import com.cognia.app.service.VideoProcessingService
+import com.cognia.app.service.VideoService
+import com.cognia.app.repository.VideoRepository
 import org.koin.dsl.module
 
 // Empty module stubs for each feature area — will be populated as features are implemented
@@ -47,7 +52,10 @@ val onboardingModule = module {
 }
 
 val contentModule = module {
-    // ContentService, VideoRepository, VideoProcessingService
+    single { VideoRepository() }
+    single { VideoService(get()) }
+    single<VideoProcessingService> { FfmpegVideoProcessingService(get()) }
+    single { VideoProcessingQueue(get()) }
 }
 
 val quizModule = module {

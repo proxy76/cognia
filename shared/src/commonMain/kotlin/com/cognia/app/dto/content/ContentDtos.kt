@@ -40,3 +40,26 @@ data class VideoStatusResponse(
     val id: String,
     val status: String
 )
+
+@Serializable
+data class VideoUploadResponse(
+    val id: String,
+    val status: String,
+    val message: String
+)
+
+@Serializable
+data class VideoDetailResponse(
+    val id: String,
+    val creatorId: String,
+    val title: String,
+    val description: String? = null,
+    val categoryId: String,
+    val videoUrl: String? = null,
+    val thumbnailUrl: String? = null,
+    val status: String,
+    val difficulty: String? = null,
+    val createdAt: String,
+    val updatedAt: String,
+    val publishedAt: String? = null
+)
