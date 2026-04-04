@@ -75,6 +75,7 @@
 				77301FC998B796F2EAB1FDF2 /* Sources */,
 				36C7D1F88EAE980907781E1F /* Frameworks */,
 				CEFA8B7A1199ACFFC4463176 /* Resources */,
+				A1B2C3D4E5F60718293A4B5C /* Strip Extended Attributes */,
 			);
 			buildRules = (
 			);
@@ -153,6 +154,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :composeApp:embedAndSignAppleFrameworkForXcode\n";
+		};
+		A1B2C3D4E5F60718293A4B5C /* Strip Extended Attributes */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Strip Extended Attributes";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Remove extended attributes (resource forks, provenance) that break codesign\nxattr -cr \"$TARGET_BUILD_DIR/$PRODUCT_NAME.app\" 2>/dev/null || true\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
