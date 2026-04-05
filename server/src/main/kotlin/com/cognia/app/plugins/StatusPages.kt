@@ -78,6 +78,21 @@ fun Application.configureStatusPages() {
             call.respondJsonError(status, "NOT_FOUND", "Resource not found")
         }
 
+        // ── Broken pipe — browser cancelled the request (normal for video streaming) ──
+        exception<io.ktor.utils.io.ClosedByteChannelException> { _, _ -> }
+        exception<io.ktor.util.cio.ChannelWriteException> { _, _ -> }
+        exception<java.io.IOException> { call, cause ->
+            if (cause.message == "Broken pipe") { /* browser disconnected, ignore */ }
+            else {
+                call.application.environment.log.error("IO exception", cause)
+                call.respondJsonError(
+                    HttpStatusCode.InternalServerError,
+                    "INTERNAL_SERVER_ERROR",
+                    "An unexpected error occurred"
+                )
+            }
+        }
+
         // ── Generic fallback ────────────────────────────────────────
         exception<Throwable> { call, cause ->
             call.application.environment.log.error("Unhandled exception", cause)

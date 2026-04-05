@@ -11,12 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import kotlinx.browser.document
 import org.w3c.dom.HTMLVideoElement
-import org.w3c.dom.events.Event
 
-/**
- * Web implementation: places an HTML5 <video> element on top of the canvas.
- * pointer-events:none lets clicks pass through to the compose canvas underneath.
- */
 class WebVideoPlayer : PlatformVideoPlayerFactory {
 
     @Composable
@@ -31,44 +26,25 @@ class WebVideoPlayer : PlatformVideoPlayerFactory {
                 autoplay = true
                 loop = true
                 muted = true
+                preload = "auto"
                 setAttribute("playsinline", "true")
                 style.cssText = buildString {
                     append("position:fixed;")
                     append("top:0;left:0;")
                     append("width:100vw;height:100vh;")
                     append("object-fit:cover;")
-                    append("z-index:10;")              // Above the compose canvas
-                    append("pointer-events:none;")     // Clicks pass through to compose
+                    append("z-index:2147483647;")       // Max z-index — above Compose canvas
+                    append("pointer-events:none;")
                     append("background:black;")
                 }
-
-                // Debug event listeners
-                addEventListener("loadeddata", { _: Event ->
-                    println("VIDEO: loadeddata — video loaded OK: $videoUrl")
-                })
-                addEventListener("error", { _: Event ->
-                    val errCode = this.error?.code ?: 0
-                    println("VIDEO ERROR: code=$errCode for $videoUrl")
-                })
-                addEventListener("canplay", { _: Event ->
-                    println("VIDEO: canplay — ready to play")
-                })
-                addEventListener("playing", { _: Event ->
-                    println("VIDEO: playing now")
-                })
-                addEventListener("stalled", { _: Event ->
-                    println("VIDEO: stalled — data transfer interrupted")
-                })
             }
         }
 
         DisposableEffect(videoUrl) {
             val body = document.body ?: return@DisposableEffect onDispose {}
             body.appendChild(videoElement)
-            println("VIDEO: element appended to body, src=$videoUrl")
 
             onDispose {
-                println("VIDEO: disposing element")
                 videoElement.pause()
                 videoElement.removeAttribute("src")
                 videoElement.load()
@@ -76,22 +52,12 @@ class WebVideoPlayer : PlatformVideoPlayerFactory {
             }
         }
 
-        // Play / pause control
         LaunchedEffect(isPlaying) {
             try {
-                if (isPlaying) {
-                    videoElement.play()
-                    println("VIDEO: play() called")
-                } else {
-                    videoElement.pause()
-                    println("VIDEO: pause() called")
-                }
-            } catch (e: Exception) {
-                println("VIDEO: play/pause exception: ${e.message}")
-            }
+                if (isPlaying) videoElement.play() else videoElement.pause()
+            } catch (_: Exception) {}
         }
 
-        // Transparent placeholder so compose layout fills the space
         Box(modifier = modifier.fillMaxSize().background(Color.Transparent))
     }
 }

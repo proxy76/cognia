@@ -51,7 +51,7 @@ class FeedRepository {
                 QuizzesTable.id,
                 viewCountExpr
             )
-            .where { VideosTable.status eq "PUBLISHED" }
+            .where { (VideosTable.status eq "PUBLISHED") and (VideosTable.videoUrl.isNotNull()) }
             .groupBy(VideosTable.id)
 
         // Order: user categories first (if available), then by popularity
@@ -119,7 +119,7 @@ class FeedRepository {
                 viewCountExpr
             )
             .where {
-                val published = VideosTable.status eq "PUBLISHED"
+                val published = (VideosTable.status eq "PUBLISHED") and (VideosTable.videoUrl.isNotNull())
                 if (userCategoryIds.isNotEmpty()) {
                     published and (VideosTable.categoryId inList userCategoryIds)
                 } else {

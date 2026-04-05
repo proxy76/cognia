@@ -24,7 +24,6 @@ fun Route.videoStreamRoutes() {
             val videoUrl = video[VideosTable.videoUrl]
                 ?: return@get call.respond(HttpStatusCode.NotFound, ErrorBody("Video not yet processed"))
 
-            // Check access: video must be PUBLISHED or requester is the creator
             val status = video[VideosTable.status]
             if (status != "PUBLISHED") {
                 val principal = call.principal<UserPrincipal>()
@@ -38,9 +37,7 @@ fun Route.videoStreamRoutes() {
                 return@get call.respond(HttpStatusCode.NotFound, ErrorBody("Video file not found"))
             }
 
-            // respondFile handles Content-Type detection, Accept-Ranges, and
-            // Range/If-Range headers automatically — no manual chunking needed.
-            call.response.header(HttpHeaders.AcceptRanges, "bytes")
+            // respondFile handles Range requests, Content-Length, and Content-Type automatically
             call.respondFile(file)
         }
 

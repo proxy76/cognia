@@ -2,6 +2,7 @@ package com.cognia.app.service
 
 import com.cognia.app.database.*
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.mindrot.jbcrypt.BCrypt
 import java.util.UUID
@@ -16,6 +17,9 @@ import kotlinx.datetime.toLocalDateTime
 class SeedService {
 
     fun seedDevData() {
+        // Remove videos that have no actual video file
+        cleanupVideosWithoutFile()
+
         // Always ensure the test creator account exists, even if other users are present
         ensureTestCreator()
 
@@ -382,6 +386,45 @@ class SeedService {
      * This ensures a LICENSED_CREATOR account is available for upload testing,
      * even when the main seed was skipped because other users were registered.
      */
+    /**
+     * Delete any video row whose video_url is NULL or whose file no longer exists on disk.
+     */
+    private fun cleanupVideosWithoutFile() {
+        val removed = transaction {
+            val broken = VideosTable.selectAll()
+                .map { it[VideosTable.id] to it[VideosTable.videoUrl] }
+                .filter { (_, url) -> url == null || !java.io.File(url).exists() }
+                .map { it.first }
+
+            for (videoId in broken) {
+                // Cascade-delete quiz trees linked to this video
+                val quizIds = QuizzesTable.selectAll()
+                    .where { QuizzesTable.videoId eq videoId }
+                    .map { it[QuizzesTable.id] }
+                for (qId in quizIds) {
+                    val questionIds = QuizQuestionsTable.selectAll()
+                        .where { QuizQuestionsTable.quizId eq qId }
+                        .map { it[QuizQuestionsTable.id] }
+                    for (questionId in questionIds) {
+                        QuizOptionsTable.deleteWhere { QuizOptionsTable.questionId eq questionId }
+                    }
+                    QuizAttemptsTable.deleteWhere { QuizAttemptsTable.quizId eq qId }
+                    QuizQuestionsTable.deleteWhere { QuizQuestionsTable.quizId eq qId }
+                    QuizzesTable.deleteWhere { QuizzesTable.id eq qId }
+                }
+                ContentViewsTable.deleteWhere { ContentViewsTable.contentId eq videoId }
+                ModerationReviewsTable.deleteWhere { ModerationReviewsTable.contentId eq videoId }
+                ContentReportsTable.deleteWhere { ContentReportsTable.contentId eq videoId }
+                ContentSharesTable.deleteWhere { ContentSharesTable.contentId eq videoId }
+                VideosTable.deleteWhere { VideosTable.id eq videoId }
+            }
+            broken.size
+        }
+        if (removed > 0) {
+            println("SeedService: Cleaned up $removed video(s) with no file on disk")
+        }
+    }
+
     private fun ensureTestCreator() {
         val testEmail = "testcreator@cognia.dev"
         val exists = transaction {
