@@ -10,6 +10,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -29,40 +30,21 @@ class FeedViewModelTest {
     }
 
     @Test
-    fun initialStateDefaultsToForYouTab() {
+    fun initialStateDefaults() {
         val viewModel = FeedViewModel()
         val state = viewModel.state.value
 
-        assertEquals(FeedTab.FOR_YOU, state.selectedTab)
-        assertEquals(1, state.page)
+        assertEquals(0, state.currentIndex)
+        assertNull(state.topicFilter)
     }
 
     @Test
-    fun selectTabUpdatesSelectedTab() {
+    fun loadFeedWithTopicFilterSetsFilter() {
         val viewModel = FeedViewModel()
 
-        viewModel.selectTab(FeedTab.DEEP_DIVE)
+        viewModel.loadFeed("science")
 
-        assertEquals(FeedTab.DEEP_DIVE, viewModel.state.value.selectedTab)
-    }
-
-    @Test
-    fun selectTabResetsPage() {
-        val viewModel = FeedViewModel()
-
-        viewModel.selectTab(FeedTab.DEEP_DIVE)
-
-        assertEquals(1, viewModel.state.value.page)
-    }
-
-    @Test
-    fun selectTabSwitchesBackToForYou() {
-        val viewModel = FeedViewModel()
-
-        viewModel.selectTab(FeedTab.DEEP_DIVE)
-        viewModel.selectTab(FeedTab.FOR_YOU)
-
-        assertEquals(FeedTab.FOR_YOU, viewModel.state.value.selectedTab)
+        assertEquals("science", viewModel.state.value.topicFilter)
     }
 
     @Test

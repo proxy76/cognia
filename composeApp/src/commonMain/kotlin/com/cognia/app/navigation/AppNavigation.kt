@@ -43,7 +43,6 @@ import com.cognia.app.ui.chat.ChatConversationScreen
 import com.cognia.app.ui.chat.ChatConversationViewModel
 import com.cognia.app.ui.chat.ChatListScreen as ChatListScreenNew
 import com.cognia.app.ui.chat.ChatListViewModel
-import com.cognia.app.ui.screens.HomeScreen
 import com.cognia.app.ui.onboarding.OnboardingScreen
 import com.cognia.app.ui.onboarding.OnboardingViewModel
 import com.cognia.app.ui.screens.PlaceholderScreen
@@ -65,7 +64,7 @@ import com.cognia.app.ui.theme.MobileContentMaxWidth
 import com.cognia.app.ui.theme.NeonPurple
 import com.cognia.app.ui.theme.SurfaceDark
 import com.cognia.app.ui.theme.WindowWidthClass
-import com.cognia.app.ui.theme.immersiveRoutes
+import com.cognia.app.network.ApiClientProvider
 
 /** Routes that use a wider layout on desktop (dashboards, analytics). */
 private val wideLayoutRoutes = setOf(
@@ -85,14 +84,21 @@ fun AppNavigation() {
 
     val authViewModel: AuthViewModel = viewModel { AuthViewModel() }
 
+    // Auto-login: if tokens exist from a previous session (e.g. stored in localStorage),
+    // skip the welcome/login screens and go directly to Home.
+    LaunchedEffect(Unit) {
+        if (ApiClientProvider.tokenStorage.hasStoredTokens()) {
+            navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.Welcome.route) { inclusive = true }
+            }
+        }
+    }
+
     // Determine layout strategy per route type
     val isWideRoute = currentRoute in wideLayoutRoutes
-    val isImmersive = currentRoute in immersiveRoutes
     val maxContentWidth = when {
-        isImmersive -> dp_unbound  // Video player handles its own desktop framing
         isWideRoute -> DashboardContentMaxWidth
-        windowWidthClass == WindowWidthClass.COMPACT -> dp_unbound
-        else -> MobileContentMaxWidth
+        else -> dp_unbound  // Full-width by default for web
     }
 
     Row(
@@ -226,12 +232,15 @@ fun AppNavigation() {
                         // Main tabs
                         composable(Screen.Home.route) {
                             FeedScreen(
-                                onNavigateToVideo = { videoId ->
-                                    navController.navigate(Screen.ReelPlayer.createRoute(videoId))
-                                },
                                 onNavigateToCreator = { userId ->
                                     navController.navigate(Screen.UserProfile.createRoute(userId))
-                                }
+                                },
+                                onNavigateToQuiz = { videoId ->
+                                    navController.navigate(Screen.QuizScreen.createRoute(videoId))
+                                },
+                                onNavigateToTopic = { hashtag ->
+                                    navController.navigate(Screen.ForYouTopic.createRoute(hashtag))
+                                },
                             )
                         }
                         composable(Screen.Search.route) { SearchScreenContent() }
@@ -336,7 +345,30 @@ fun AppNavigation() {
                                 },
                                 onNavigateToQuiz = { videoId ->
                                     navController.navigate(Screen.QuizScreen.createRoute(videoId))
-                                }
+                                },
+                                onNavigateToTopic = { hashtag ->
+                                    navController.navigate(Screen.ForYouTopic.createRoute(hashtag))
+                                },
+                            )
+                        }
+
+                        // Topic-filtered For You page
+                        composable(Screen.ForYouTopic.route) { backStackEntry ->
+                            val hashtag = backStackEntry.destination.route
+                                ?.removePrefix("fy/")
+                                ?: ""
+                            FeedScreen(
+                                topicFilter = hashtag,
+                                onNavigateToCreator = { userId ->
+                                    navController.navigate(Screen.UserProfile.createRoute(userId))
+                                },
+                                onNavigateToQuiz = { videoId ->
+                                    navController.navigate(Screen.QuizScreen.createRoute(videoId))
+                                },
+                                onNavigateToTopic = { tag ->
+                                    navController.navigate(Screen.ForYouTopic.createRoute(tag))
+                                },
+                                onNavigateBack = { navController.popBackStack() },
                             )
                         }
 

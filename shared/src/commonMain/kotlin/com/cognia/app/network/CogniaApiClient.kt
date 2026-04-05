@@ -29,6 +29,8 @@ import com.cognia.app.dto.social.FollowerListResponse
 import com.cognia.app.dto.social.FollowingListResponse
 import com.cognia.app.dto.social.FriendListResponse
 import com.cognia.app.dto.social.PendingRequestsResponse
+import com.cognia.app.dto.content.VideoUploadResponse
+import com.cognia.app.dto.content.VideoDetailResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -82,6 +84,37 @@ class CogniaApiClient(
                 parameter("page", page)
                 parameter("limit", limit)
             }
+        }
+
+    // ── Video Upload ─────────────────────────────────────────────────
+    suspend fun uploadVideo(
+        title: String,
+        description: String?,
+        categoryId: String,
+        fileBytes: ByteArray,
+        fileName: String,
+    ): ApiResult<VideoUploadResponse> =
+        safeCall {
+            client.post(ApiConfig.apiUrl("/videos")) {
+                setBody(
+                    io.ktor.client.request.forms.MultiPartFormDataContent(
+                        io.ktor.client.request.forms.formData {
+                            append("title", title)
+                            if (description != null) append("description", description)
+                            append("categoryId", categoryId)
+                            append("file", fileBytes, io.ktor.http.Headers.build {
+                                append(io.ktor.http.HttpHeaders.ContentType, "video/mp4")
+                                append(io.ktor.http.HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
+                            })
+                        }
+                    )
+                )
+            }
+        }
+
+    suspend fun publishVideo(videoId: String): ApiResult<VideoDetailResponse> =
+        safeCall {
+            client.post(ApiConfig.apiUrl("/videos/$videoId/publish"))
         }
 
     // ── Search ──────────────────────────────────────────────────────

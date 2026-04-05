@@ -30,6 +30,7 @@ class SeedService {
         val creator3Id = "seed-creator-003"
         val learnerId = "seed-learner-001"
         val learner2Id = "seed-learner-002"
+        val testCreatorId = "seed-test-creator-001"
 
         val users = listOf(
             SeedUser(adminId, "admin@cognia.dev", "Admin User", "ADMIN"),
@@ -37,7 +38,8 @@ class SeedService {
             SeedUser(creator2Id, "marcus@cognia.dev", "Marcus Rivera", "LICENSED_CREATOR"),
             SeedUser(creator3Id, "alex@cognia.dev", "Alex Thompson", "REGULAR_CREATOR"),
             SeedUser(learnerId, "demo@cognia.dev", "Demo Learner", "LEARNER"),
-            SeedUser(learner2Id, "jamie@cognia.dev", "Jamie Park", "LEARNER")
+            SeedUser(learner2Id, "jamie@cognia.dev", "Jamie Park", "LEARNER"),
+            SeedUser(testCreatorId, "testcreator@cognia.dev", "Test Creator", "LICENSED_CREATOR")
         )
 
         transaction {

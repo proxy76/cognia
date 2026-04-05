@@ -9,8 +9,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-enum class FeedTab { FOR_YOU, DEEP_DIVE }
-
 data class FeedItemUi(
     val id: String,
     val title: String,
@@ -23,12 +21,11 @@ data class FeedItemUi(
 )
 
 data class FeedUiState(
-    val selectedTab: FeedTab = FeedTab.FOR_YOU,
     val items: List<FeedItemUi> = emptyList(),
+    val currentIndex: Int = 0,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val page: Int = 1,
-    val hasMore: Boolean = false
+    val topicFilter: String? = null,
 )
 
 class FeedViewModel : ViewModel() {
@@ -41,24 +38,13 @@ class FeedViewModel : ViewModel() {
         loadFeed()
     }
 
-    fun selectTab(tab: FeedTab) {
-        _state.value = _state.value.copy(selectedTab = tab, page = 1)
-        loadFeed()
-    }
-
-    fun loadFeed() {
-        val tab = _state.value.selectedTab
-        val page = _state.value.page
-        _state.value = _state.value.copy(isLoading = true, error = null)
+    fun loadFeed(topicFilter: String? = null) {
+        _state.value = _state.value.copy(isLoading = true, error = null, topicFilter = topicFilter, currentIndex = 0)
 
         viewModelScope.launch {
-            val result = when (tab) {
-                FeedTab.FOR_YOU -> api.getForYouFeed(page)
-                FeedTab.DEEP_DIVE -> api.getDeepDiveFeed(page)
-            }
-            when (result) {
+            when (val result = api.getForYouFeed(page = 1, limit = 40)) {
                 is ApiResult.Success -> {
-                    val items = result.data.items.map { item ->
+                    val allItems = result.data.items.map { item ->
                         FeedItemUi(
                             id = item.id,
                             title = item.title,
@@ -70,11 +56,21 @@ class FeedViewModel : ViewModel() {
                             hasQuiz = item.hasQuiz
                         )
                     }
+                    // If topic filter is set, filter items client-side by matching
+                    // category name or derived hashtags against the filter
+                    val items = if (topicFilter != null) {
+                        allItems.filter { item ->
+                            val hashtags = deriveHashtags(item)
+                            item.categoryName.equals(topicFilter, ignoreCase = true) ||
+                                hashtags.any { it.equals(topicFilter, ignoreCase = true) }
+                        }
+                    } else {
+                        allItems
+                    }
                     _state.value = _state.value.copy(
                         items = items,
                         isLoading = false,
                         error = null,
-                        hasMore = result.data.hasMore
                     )
                 }
                 is ApiResult.Error -> {
@@ -87,8 +83,35 @@ class FeedViewModel : ViewModel() {
         }
     }
 
-    fun refresh() {
-        _state.value = _state.value.copy(page = 1)
-        loadFeed()
+    fun setCurrentIndex(index: Int) {
+        val current = _state.value
+        if (index in current.items.indices && index != current.currentIndex) {
+            _state.value = current.copy(currentIndex = index)
+        }
     }
+
+    fun swipeNext() {
+        val current = _state.value
+        if (current.currentIndex < current.items.size - 1) {
+            _state.value = current.copy(currentIndex = current.currentIndex + 1)
+        }
+    }
+
+    fun swipePrevious() {
+        val current = _state.value
+        if (current.currentIndex > 0) {
+            _state.value = current.copy(currentIndex = current.currentIndex - 1)
+        }
+    }
+}
+
+/** Derive hashtag-style tags from a feed item's title and category. */
+fun deriveHashtags(item: FeedItemUi): List<String> {
+    val titleWords = item.title
+        .split(" ", "-", ":", ",")
+        .filter { it.length > 3 }
+        .map { it.lowercase().trim() }
+        .distinct()
+    val tags = (listOf(item.categoryName.lowercase()) + titleWords).distinct().take(4)
+    return if (tags.size >= 2) tags else listOf(item.categoryName.lowercase(), "education", "learning", "cognia")
 }

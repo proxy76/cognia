@@ -38,6 +38,9 @@ class UploadViewModel : ViewModel() {
 
     val difficulties = listOf("EASY", "MEDIUM", "HARD")
 
+    /** Holds the raw file bytes selected by the platform file picker. */
+    private var selectedFileBytes: ByteArray? = null
+
     init {
         loadCategories()
     }
@@ -56,7 +59,11 @@ class UploadViewModel : ViewModel() {
         }
     }
 
-    fun selectFile(fileName: String) {
+    /**
+     * Called by the platform file picker to store selected file bytes.
+     */
+    fun selectFile(fileName: String, fileBytes: ByteArray? = null) {
+        selectedFileBytes = fileBytes
         _state.value = _state.value.copy(
             selectedFileName = fileName,
             fileError = null,
@@ -104,7 +111,7 @@ class UploadViewModel : ViewModel() {
             categoryError = "Please select a category"
             hasError = true
         }
-        if (current.selectedFileName == null) {
+        if (current.selectedFileName == null || selectedFileBytes == null) {
             fileError = "Please select a file"
             hasError = true
         }
@@ -120,18 +127,65 @@ class UploadViewModel : ViewModel() {
 
         _state.value = current.copy(isUploading = true, error = null)
 
-        // Note: Actual multipart file upload requires platform-specific file access.
-        // The backend POST /api/v1/videos endpoint accepts multipart form data.
-        // For now, we mark success since the backend upload route is functional
-        // but the client-side file picker + multipart upload needs platform integration.
-        _state.value = _state.value.copy(
-            isUploading = false,
-            uploadProgress = 1f,
-            uploadSuccess = true
-        )
+        viewModelScope.launch {
+            // Step 1: Upload video via multipart
+            val uploadResult = api.uploadVideo(
+                title = current.title,
+                description = current.description.ifBlank { null },
+                categoryId = current.selectedCategoryId!!,
+                fileBytes = selectedFileBytes!!,
+                fileName = current.selectedFileName!!,
+            )
+
+            when (uploadResult) {
+                is ApiResult.Success -> {
+                    val videoId = uploadResult.data.id
+
+                    // Step 2: Auto-publish for licensed creators
+                    val publishResult = api.publishVideo(videoId)
+                    when (publishResult) {
+                        is ApiResult.Success -> {
+                            _state.value = _state.value.copy(
+                                isUploading = false,
+                                uploadProgress = 1f,
+                                uploadSuccess = true
+                            )
+                        }
+                        is ApiResult.Error -> {
+                            // Upload succeeded but publish failed — video is in DRAFT
+                            _state.value = _state.value.copy(
+                                isUploading = false,
+                                uploadProgress = 1f,
+                                uploadSuccess = true,
+                                error = "Uploaded but publish failed: ${publishResult.message}"
+                            )
+                        }
+                        is ApiResult.NetworkError -> {
+                            _state.value = _state.value.copy(
+                                isUploading = false,
+                                error = "Network error during publish: ${publishResult.throwable.message}"
+                            )
+                        }
+                    }
+                }
+                is ApiResult.Error -> {
+                    _state.value = _state.value.copy(
+                        isUploading = false,
+                        error = "Upload failed: ${uploadResult.message}"
+                    )
+                }
+                is ApiResult.NetworkError -> {
+                    _state.value = _state.value.copy(
+                        isUploading = false,
+                        error = "Network error: ${uploadResult.throwable.message}"
+                    )
+                }
+            }
+        }
     }
 
     fun clearState() {
+        selectedFileBytes = null
         _state.value = UploadUiState()
     }
 }

@@ -34,4 +34,7 @@ sealed class Screen(val route: String) {
     data object CreatorAnalytics : Screen("analytics")
     data object ModerationDashboard : Screen("moderation")
     data object Settings : Screen("settings")
+    data object ForYouTopic : Screen("fy/{hashtag}") {
+        fun createRoute(hashtag: String) = "fy/$hashtag"
+    }
 }

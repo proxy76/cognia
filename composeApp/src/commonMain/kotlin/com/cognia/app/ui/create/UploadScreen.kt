@@ -62,6 +62,7 @@ import com.cognia.app.ui.theme.SurfaceDarkCard
 @Composable
 fun UploadScreen(viewModel: UploadViewModel) {
     val state by viewModel.state.collectAsState()
+    val filePicker = LocalPlatformFilePicker.current
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -89,6 +90,7 @@ fun UploadScreen(viewModel: UploadViewModel) {
             UploadFormContent(
                 state = state,
                 viewModel = viewModel,
+                filePicker = filePicker,
                 modifier = Modifier.padding(paddingValues)
             )
         }
@@ -117,7 +119,7 @@ private fun SuccessContent(onCreateAnother: () -> Unit, modifier: Modifier = Mod
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Your video has been submitted for processing.",
+            text = "Your video has been published and is now in the feed!",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -138,6 +140,7 @@ private fun SuccessContent(onCreateAnother: () -> Unit, modifier: Modifier = Mod
 private fun UploadFormContent(
     state: UploadUiState,
     viewModel: UploadViewModel,
+    filePicker: PlatformFilePicker,
     modifier: Modifier = Modifier
 ) {
     val textFieldColors = OutlinedTextFieldDefaults.colors(
@@ -159,8 +162,11 @@ private fun UploadFormContent(
                 .fillMaxWidth()
                 .height(120.dp)
                 .clickable {
-                    // TODO: Integrate platform file picker
-                    viewModel.selectFile("sample_video.mp4")
+                    filePicker.pickFile("video/*") { result ->
+                        if (result != null) {
+                            viewModel.selectFile(result.fileName, result.fileBytes)
+                        }
+                    }
                 },
             colors = CardDefaults.cardColors(containerColor = SurfaceDarkCard),
             shape = MaterialTheme.shapes.medium,
