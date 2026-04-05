@@ -13,6 +13,10 @@ fun Application.configureCors() {
         allowMethod(HttpMethod.Options)
         allowHeader(HttpHeaders.Authorization)
         allowHeader(HttpHeaders.ContentType)
+        allowHeader(HttpHeaders.Range)
+        exposeHeader(HttpHeaders.ContentRange)
+        exposeHeader(HttpHeaders.AcceptRanges)
+        exposeHeader(HttpHeaders.ContentLength)
         anyHost() // Dev only — restrict in production
     }
 }

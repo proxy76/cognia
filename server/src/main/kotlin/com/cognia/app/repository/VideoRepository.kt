@@ -38,6 +38,7 @@ class VideoRepository {
             it[VideosTable.description] = description
             it[VideosTable.categoryId] = categoryId
             it[VideosTable.rawFilePath] = rawFilePath
+            it[VideosTable.videoUrl] = rawFilePath   // Use raw file for immediate streaming
             it[VideosTable.status] = "DRAFT"
             it[VideosTable.createdAt] = now
             it[VideosTable.updatedAt] = now
@@ -49,7 +50,7 @@ class VideoRepository {
             title = title,
             description = description,
             categoryId = categoryId,
-            videoUrl = null,
+            videoUrl = rawFilePath,
             thumbnailUrl = null,
             rawFilePath = rawFilePath,
             status = "DRAFT",

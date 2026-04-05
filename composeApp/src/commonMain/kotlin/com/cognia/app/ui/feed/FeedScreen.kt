@@ -180,7 +180,6 @@ private fun ImmersiveFeed(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
     ) {
         VerticalPager(
             state = pagerState,
@@ -211,7 +210,7 @@ private fun ImmersiveFeed(
                     }
             ) {
                 // ── Video background ──
-                VideoBackground(item)
+                VideoBackground(item, isPlaying = isPlaying)
 
                 // ── Top scrim ──
                 Box(
@@ -418,31 +417,53 @@ private fun ImmersiveFeed(
 // ── Video Background ────────────────────────────────────────────────
 
 @Composable
-private fun VideoBackground(item: FeedItemUi) {
+private fun VideoBackground(item: FeedItemUi, isPlaying: Boolean = true) {
+    val fullVideoUrl = if (item.videoUrl != null) {
+        com.cognia.app.network.ApiConfig.baseUrl + item.videoUrl
+    } else {
+        null
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF080812),
-                        NeonViolet.copy(alpha = 0.07f),
-                        NeonPurpleDark.copy(alpha = 0.04f),
-                        Color(0xFF080812),
-                    )
-                )
-            ),
+            .background(if (fullVideoUrl != null) Color.Transparent else Color.Black),
         contentAlignment = Alignment.Center
     ) {
-        // Faint title watermark
-        Text(
-            text = item.title,
-            style = MaterialTheme.typography.headlineLarge,
-            color = NeonPurple.copy(alpha = 0.06f),
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(48.dp)
-        )
+        if (fullVideoUrl != null) {
+            val videoPlayer = LocalVideoPlayer.current
+            videoPlayer.VideoPlayer(
+                videoUrl = fullVideoUrl,
+                isPlaying = isPlaying,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            // Placeholder gradient for videos without a stream URL
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF080812),
+                                NeonViolet.copy(alpha = 0.07f),
+                                NeonPurpleDark.copy(alpha = 0.04f),
+                                Color(0xFF080812),
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = item.title,
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = NeonPurple.copy(alpha = 0.06f),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(48.dp)
+                )
+            }
+        }
     }
 }
 

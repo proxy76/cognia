@@ -38,40 +38,10 @@ fun Route.videoStreamRoutes() {
                 return@get call.respond(HttpStatusCode.NotFound, ErrorBody("Video file not found"))
             }
 
-            // Handle range requests for streaming
-            val rangeHeader = call.request.headers[HttpHeaders.Range]
-            val fileLength = file.length()
-
-            if (rangeHeader != null) {
-                val range = rangeHeader.removePrefix("bytes=")
-                val parts = range.split("-")
-                val start = parts[0].toLongOrNull() ?: 0L
-                val end = if (parts.size > 1 && parts[1].isNotBlank()) parts[1].toLong() else fileLength - 1
-                val contentLength = end - start + 1
-
-                call.response.header(HttpHeaders.ContentRange, "bytes $start-$end/$fileLength")
-                call.response.header(HttpHeaders.AcceptRanges, "bytes")
-                call.response.header(HttpHeaders.ContentLength, contentLength.toString())
-                call.response.header(HttpHeaders.ContentType, "video/mp4")
-                call.response.status(HttpStatusCode.PartialContent)
-
-                call.respondOutputStream {
-                    file.inputStream().use { input ->
-                        input.skip(start)
-                        val buffer = ByteArray(8192)
-                        var remaining = contentLength
-                        while (remaining > 0) {
-                            val read = input.read(buffer, 0, minOf(buffer.size.toLong(), remaining).toInt())
-                            if (read <= 0) break
-                            write(buffer, 0, read)
-                            remaining -= read
-                        }
-                    }
-                }
-            } else {
-                call.response.header(HttpHeaders.AcceptRanges, "bytes")
-                call.respondFile(file)
-            }
+            // respondFile handles Content-Type detection, Accept-Ranges, and
+            // Range/If-Range headers automatically — no manual chunking needed.
+            call.response.header(HttpHeaders.AcceptRanges, "bytes")
+            call.respondFile(file)
         }
 
         get("/{id}/thumbnail") {

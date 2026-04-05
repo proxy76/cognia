@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head><title>Feed API Test</title></head>
+<body style="margin:0;background:#000;color:#fff;font-family:monospace;padding:20px;">
+<h2>Feed API Test</h2>
+<pre id="output">Logging in...</pre>
+<script>
+const out = document.getElementById('output');
+async function test() {
+  try {
+    // Login
+    const loginResp = await fetch('http://localhost:8080/api/v1/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'admin@cognia.dev', password: 'password123' })
+    });
+    const loginData = await loginResp.json();
+    out.textContent = 'Login: ' + loginResp.status + '\n';
+    
+    if (!loginData.accessToken) {
+      out.textContent += 'ERROR: No access token received\n' + JSON.stringify(loginData, null, 2);
+      return;
+    }
+
+    // Fetch feed
+    const feedResp = await fetch('http://localhost:8080/api/v1/feed/foryou?limit=5', {
+      headers: { 'Authorization': 'Bearer ' + loginData.accessToken }
+    });
+    const feedData = await feedResp.json();
+    out.textContent += 'Feed: ' + feedResp.status + '\n';
+    out.textContent += 'Items: ' + feedData.items.length + '\n\n';
+
+    feedData.items.forEach((item, i) => {
+      out.textContent += `[${i}] ${item.title}\n`;
+      out.textContent += `    id: ${item.id}\n`;
+      out.textContent += `    videoUrl: ${item.videoUrl || 'NULL'}\n`;
+      out.textContent += `    thumbnailUrl: ${item.thumbnailUrl || 'NULL'}\n`;
+      out.textContent += '\n';
+    });
+  } catch (e) {
+    out.textContent += 'ERROR: ' + e.message;
+  }
+}
+test();
+</script>
+</body>
+</html>

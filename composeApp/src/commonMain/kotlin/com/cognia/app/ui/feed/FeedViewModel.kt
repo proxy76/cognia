@@ -15,6 +15,7 @@ data class FeedItemUi(
     val creatorName: String,
     val creatorId: String,
     val thumbnailUrl: String?,
+    val videoUrl: String?,
     val categoryName: String,
     val difficulty: String?,
     val hasQuiz: Boolean
@@ -51,6 +52,7 @@ class FeedViewModel : ViewModel() {
                             creatorName = item.creatorName,
                             creatorId = item.creatorId,
                             thumbnailUrl = item.thumbnailUrl,
+                            videoUrl = item.videoUrl,
                             categoryName = item.categoryName,
                             difficulty = item.difficulty,
                             hasQuiz = item.hasQuiz

@@ -98,9 +98,9 @@ fun Route.videoRoutes() {
                         )
 
                         // Auto-route based on role:
-                        // LICENSED_CREATOR → instant publish
-                        // Everyone else   → submit for moderation review
-                        if (principal.role == "LICENSED_CREATOR") {
+                        // LICENSED_CREATOR / ADMIN → instant publish
+                        // Everyone else             → submit for moderation review
+                        if (principal.role == "LICENSED_CREATOR" || principal.role == "ADMIN") {
                             val published = videoService.publishDirect(draft.id, principal.userId, principal.role)
                             call.respond(HttpStatusCode.Created, VideoUploadResponse(
                                 id = published.id,

@@ -5,6 +5,8 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import com.cognia.app.ui.create.LocalPlatformFilePicker
 import com.cognia.app.ui.create.WebFilePicker
+import com.cognia.app.ui.feed.LocalVideoPlayer
+import com.cognia.app.ui.feed.WebVideoPlayer
 import kotlinx.browser.localStorage
 import org.w3c.dom.get
 import org.w3c.dom.set
@@ -14,7 +16,8 @@ fun main() {
     initAppWeb()
     ComposeViewport {
         CompositionLocalProvider(
-            LocalPlatformFilePicker provides WebFilePicker()
+            LocalPlatformFilePicker provides WebFilePicker(),
+            LocalVideoPlayer provides WebVideoPlayer(),
         ) {
             App()
         }

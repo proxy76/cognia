@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><title>Video Test</title></head>
+<body style="margin:0;background:#000;color:#fff;font-family:sans-serif;text-align:center;padding:20px;">
+<h2>Video Stream Test</h2>
+<p>If you see the video below playing, the stream endpoint works.</p>
+<video id="testVideo" controls autoplay muted loop style="width:80%;max-height:70vh;border:2px solid #BB86FC;">
+  <source src="http://localhost:8080/api/v1/videos/bc1ecfc2-3c07-4fa6-aab0-b2719a6f118d/stream" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+<p id="status">Loading...</p>
+<script>
+const v = document.getElementById('testVideo');
+const s = document.getElementById('status');
+v.addEventListener('loadeddata', () => { s.textContent = 'Video loaded OK!'; s.style.color = '#4CAF50'; });
+v.addEventListener('error', (e) => { s.textContent = 'ERROR: ' + (v.error ? v.error.message : 'unknown'); s.style.color = '#F44336'; });
+v.addEventListener('playing', () => { s.textContent = 'Playing!'; s.style.color = '#4CAF50'; });
+</script>
+</body>
+</html>

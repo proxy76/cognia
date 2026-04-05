@@ -9,6 +9,7 @@ data class FeedItem(
     val creatorName: String,
     val creatorId: String,
     val thumbnailUrl: String? = null,
+    val videoUrl: String? = null,
     val categoryName: String,
     val difficulty: String? = null,
     val hasQuiz: Boolean = false
