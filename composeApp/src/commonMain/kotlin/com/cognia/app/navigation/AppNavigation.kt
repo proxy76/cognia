@@ -235,7 +235,17 @@ fun AppNavigation() {
                                 },
                                 onNavigateToQuiz = { videoId ->
                                     navController.navigate(Screen.QuizScreen.createRoute(videoId))
+<<<<<<< Updated upstream
                                 }
+=======
+                                },
+                                onNavigateToTopic = { hashtag ->
+                                    navController.navigate(Screen.ForYouTopic.createRoute(hashtag))
+                                },
+                                onNavigateToEli5 = { eli5VideoId ->
+                                    navController.navigate(Screen.ReelPlayer.createRoute(eli5VideoId))
+                                },
+>>>>>>> Stashed changes
                             )
                         }
                         composable(Screen.Search.route) { SearchScreenContent() }
@@ -345,7 +355,40 @@ fun AppNavigation() {
                                 },
                                 onNavigateToQuiz = { videoId ->
                                     navController.navigate(Screen.QuizScreen.createRoute(videoId))
+<<<<<<< Updated upstream
                                 }
+=======
+                                },
+                                onNavigateToTopic = { hashtag ->
+                                    navController.navigate(Screen.ForYouTopic.createRoute(hashtag))
+                                },
+                                onNavigateToEli5 = { eli5VideoId ->
+                                    navController.navigate(Screen.ReelPlayer.createRoute(eli5VideoId))
+                                },
+                            )
+                        }
+
+                        // Topic-filtered For You page
+                        composable(Screen.ForYouTopic.route) { backStackEntry ->
+                            val hashtag = backStackEntry.destination.route
+                                ?.removePrefix("fy/")
+                                ?: ""
+                            FeedScreen(
+                                topicFilter = hashtag,
+                                onNavigateToCreator = { userId ->
+                                    navController.navigate(Screen.UserProfile.createRoute(userId))
+                                },
+                                onNavigateToQuiz = { videoId ->
+                                    navController.navigate(Screen.QuizScreen.createRoute(videoId))
+                                },
+                                onNavigateToTopic = { tag ->
+                                    navController.navigate(Screen.ForYouTopic.createRoute(tag))
+                                },
+                                onNavigateToEli5 = { eli5VideoId ->
+                                    navController.navigate(Screen.ReelPlayer.createRoute(eli5VideoId))
+                                },
+                                onNavigateBack = { navController.popBackStack() },
+>>>>>>> Stashed changes
                             )
                         }
 

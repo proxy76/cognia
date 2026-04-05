@@ -63,6 +63,7 @@ object VideosTable : Table("videos") {
     val rawFilePath = text("raw_file_path").nullable()
     val status = text("status").default("DRAFT")
     val difficulty = text("difficulty").nullable()
+    val eli5VideoId = text("eli5_video_id").nullable()
     val createdAt = text("created_at")
     val updatedAt = text("updated_at")
     val publishedAt = text("published_at").nullable()

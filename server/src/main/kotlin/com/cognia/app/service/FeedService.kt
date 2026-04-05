@@ -34,6 +34,7 @@ class FeedService(
         return FeedResponse(items = items, page = page, hasMore = hasMore)
     }
 
+<<<<<<< Updated upstream
     private fun com.cognia.app.repository.FeedVideoRow.toFeedItem() = FeedItem(
         id = id,
         title = title,
@@ -46,4 +47,21 @@ class FeedService(
         quizId = quizId,
         hasEli5 = hasEli5
     )
+=======
+    private fun com.cognia.app.repository.FeedVideoRow.toFeedItem(): FeedItem {
+        val streamUrl = "/api/v1/videos/$id/stream"
+        return FeedItem(
+            id = id,
+            title = title,
+            creatorName = creatorName,
+            creatorId = creatorId,
+            thumbnailUrl = thumbnailUrl,
+            videoUrl = if (videoUrl != null) streamUrl else null,
+            categoryName = categoryName,
+            difficulty = difficulty,
+            hasQuiz = hasQuiz,
+            eli5VideoId = eli5VideoId
+        )
+    }
+>>>>>>> Stashed changes
 }

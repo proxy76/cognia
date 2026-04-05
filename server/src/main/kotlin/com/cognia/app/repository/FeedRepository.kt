@@ -13,8 +13,12 @@ data class FeedVideoRow(
     val categoryName: String,
     val difficulty: String?,
     val hasQuiz: Boolean,
+<<<<<<< Updated upstream
     val quizId: String?,
     val hasEli5: Boolean,
+=======
+    val eli5VideoId: String?,
+>>>>>>> Stashed changes
     val viewCount: Long
 )
 
@@ -48,6 +52,7 @@ class FeedRepository {
                 VideosTable.thumbnailUrl,
                 CategoriesTable.name,
                 VideosTable.difficulty,
+                VideosTable.eli5VideoId,
                 QuizzesTable.id,
                 VideosTable.eli5VideoUrl,
                 viewCountExpr
@@ -82,8 +87,12 @@ class FeedRepository {
                     categoryName = row[CategoriesTable.name],
                     difficulty = row[VideosTable.difficulty],
                     hasQuiz = row[QuizzesTable.id] != null,
+<<<<<<< Updated upstream
                     quizId = row[QuizzesTable.id],
                     hasEli5 = row[VideosTable.eli5VideoUrl] != null,
+=======
+                    eli5VideoId = row[VideosTable.eli5VideoId],
+>>>>>>> Stashed changes
                     viewCount = row[viewCountExpr]
                 )
             }
@@ -116,6 +125,7 @@ class FeedRepository {
                 VideosTable.thumbnailUrl,
                 CategoriesTable.name,
                 VideosTable.difficulty,
+                VideosTable.eli5VideoId,
                 QuizzesTable.id,
                 VideosTable.eli5VideoUrl,
                 viewCountExpr
@@ -143,8 +153,12 @@ class FeedRepository {
                 categoryName = row[CategoriesTable.name],
                 difficulty = row[VideosTable.difficulty],
                 hasQuiz = row[QuizzesTable.id] != null,
+<<<<<<< Updated upstream
                 quizId = row[QuizzesTable.id],
                 hasEli5 = row[VideosTable.eli5VideoUrl] != null,
+=======
+                eli5VideoId = row[VideosTable.eli5VideoId],
+>>>>>>> Stashed changes
                 viewCount = row[viewCountExpr]
             )
         }

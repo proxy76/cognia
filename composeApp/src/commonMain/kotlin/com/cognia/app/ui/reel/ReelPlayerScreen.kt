@@ -19,6 +19,11 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+<<<<<<< Updated upstream
+=======
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bookmark
+>>>>>>> Stashed changes
 import androidx.compose.material.icons.filled.ChildCare
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PlayArrow
@@ -50,12 +55,21 @@ import com.cognia.app.ui.theme.NeonCyan
 import com.cognia.app.ui.theme.NeonPurple
 import com.cognia.app.ui.theme.NeonPurpleBright
 
+/** Accent color for the ELI5 (Explain Like I'm Five) button. */
+private val Eli5Amber = Color(0xFFFFB74D)
+
 @Composable
 fun ReelPlayerScreen(
     viewModel: ReelViewModel,
     onNavigateBack: () -> Unit = {},
     onNavigateToCreator: (String) -> Unit = {},
+<<<<<<< Updated upstream
     onNavigateToQuiz: (String) -> Unit = {}
+=======
+    onNavigateToQuiz: (String) -> Unit = {},
+    onNavigateToTopic: (String) -> Unit = {},
+    onNavigateToEli5: (String) -> Unit = {},
+>>>>>>> Stashed changes
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -175,6 +189,7 @@ private fun VideoReelPage(
             }
         }
 
+<<<<<<< Updated upstream
         // Right-side action buttons
         Column(
             modifier = Modifier
@@ -245,13 +260,36 @@ private fun VideoReelPage(
             )
         }
     }
+=======
+    // TikTok-style immersive layout for all screen sizes
+    ImmersiveVideoPlayer(
+        state = state,
+        onNavigateBack = onNavigateBack,
+        onNavigateToCreator = onNavigateToCreator,
+        onNavigateToQuiz = onNavigateToQuiz,
+        onNavigateToTopic = onNavigateToTopic,
+        onNavigateToEli5 = onNavigateToEli5,
+        onTogglePlayPause = viewModel::togglePlayPause,
+    )
+>>>>>>> Stashed changes
 }
 
 // ── Inline Quiz Page ────────────────────────────────────────────────
 
 @Composable
+<<<<<<< Updated upstream
 private fun InlineQuizPage(
     quizPage: QuizPage,
+=======
+private fun ImmersiveVideoPlayer(
+    state: ReelUiState,
+    onNavigateBack: () -> Unit,
+    onNavigateToCreator: (String) -> Unit,
+    onNavigateToQuiz: (String) -> Unit,
+    onNavigateToTopic: (String) -> Unit,
+    onNavigateToEli5: (String) -> Unit,
+    onTogglePlayPause: () -> Unit,
+>>>>>>> Stashed changes
 ) {
     val quizViewModel: QuizTakingViewModel = viewModel(key = quizPage.quizId) { QuizTakingViewModel() }
 
@@ -277,6 +315,218 @@ private fun InlineQuizPage(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+<<<<<<< Updated upstream
+=======
+
+                // ── Bottom scrim ──
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.4f),
+                                    Color.Black.copy(alpha = 0.75f),
+                                )
+                            )
+                        )
+                )
+
+                // ── Back button (top-left) ──
+                AnimatedVisibility(
+                    visible = overlayVisible,
+                    enter = fadeIn(tween(300)) + slideInHorizontally(tween(300)) { -it },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(start = 12.dp, top = 14.dp)
+                ) {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                }
+
+                // ── Creator info (top-left, below back button) ──
+                AnimatedVisibility(
+                    visible = overlayVisible,
+                    enter = fadeIn(tween(450, delayMillis = 120))
+                        + slideInHorizontally(tween(450, delayMillis = 120)) { -it / 2 },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(start = 16.dp, top = 58.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) { onNavigateToCreator(video.creatorId) }
+                    ) {
+                        Text(
+                            text = "@${video.creatorName}",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = shortDesc(video.title),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.65f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.widthIn(max = 200.dp)
+                        )
+                    }
+                }
+
+                // ── Page indicator (top-right) ──
+                AnimatedVisibility(
+                    visible = overlayVisible,
+                    enter = fadeIn(tween(300, delayMillis = 150)),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 18.dp, end = 16.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.Black.copy(alpha = 0.35f),
+                    ) {
+                        Text(
+                            text = "${pageIndex + 1} / ${state.videos.size}",
+                            color = Color.White.copy(alpha = 0.55f),
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                // ── Right-side action buttons ──
+                AnimatedVisibility(
+                    visible = overlayVisible,
+                    enter = fadeIn(tween(400, delayMillis = 200))
+                        + slideInHorizontally(tween(400, delayMillis = 200)) { it / 2 },
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 14.dp)
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(18.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        ReelActionButton(
+                            icon = Icons.Default.Favorite,
+                            label = "Like",
+                            tint = Color.White,
+                        )
+                        if (video.eli5VideoId != null) {
+                            ReelActionButton(
+                                icon = Icons.Default.ChildCare,
+                                label = "ELI5",
+                                tint = Eli5Amber,
+                                onClick = { video.eli5VideoId?.let(onNavigateToEli5) }
+                            )
+                        }
+                        ReelActionButton(
+                            icon = Icons.Default.Bookmark,
+                            label = "Save",
+                            tint = Color.White,
+                        )
+                        ReelActionButton(
+                            icon = Icons.Default.Share,
+                            label = "Share",
+                            tint = Color.White,
+                        )
+                        if (video.hasQuiz) {
+                            ReelActionButton(
+                                icon = Icons.Default.Psychology,
+                                label = "Quiz",
+                                tint = NeonCyan,
+                                onClick = { onNavigateToQuiz(video.id) }
+                            )
+                        }
+                    }
+                }
+
+                // ── Bottom: Diamond hashtag widget ──
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 20.dp)
+                ) {
+                    AnimatedVisibility(
+                        visible = overlayVisible,
+                        enter = fadeIn(tween(400, delayMillis = 300))
+                            + scaleIn(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                )
+                            ),
+                    ) {
+                        ReelHashtagDiamondWidget(
+                            hashtags = hashtags,
+                            onHashtagClick = onNavigateToTopic,
+                        )
+                    }
+                }
+
+                // ── Play/Pause indicator ──
+                AnimatedVisibility(
+                    visible = !state.isPlaying,
+                    enter = fadeIn(tween(150)) + scaleIn(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    ),
+                    exit = fadeOut(tween(200)) + scaleOut(tween(200)),
+                    modifier = Modifier.align(Alignment.Center)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.Black.copy(alpha = 0.45f),
+                        modifier = Modifier.size(72.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "Paused",
+                                tint = Color.White.copy(alpha = 0.9f),
+                                modifier = Modifier.size(38.dp),
+                            )
+                        }
+                    }
+                }
+
+                // ── Buffering ──
+                if (state.isBuffering) {
+                    CircularProgressIndicator(
+                        color = NeonPurple,
+                        strokeWidth = 3.dp,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .align(Alignment.Center)
+                    )
+                }
+
+                // ── Scroll indicator ──
+                if (pageIndex < state.videos.size - 1 && state.isPlaying) {
+                    ReelScrollIndicator(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 4.dp)
+                    )
+                }
+>>>>>>> Stashed changes
             }
 
             // Quiz content

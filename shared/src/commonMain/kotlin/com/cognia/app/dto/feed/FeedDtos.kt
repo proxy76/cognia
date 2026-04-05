@@ -12,8 +12,12 @@ data class FeedItem(
     val categoryName: String,
     val difficulty: String? = null,
     val hasQuiz: Boolean = false,
+<<<<<<< Updated upstream
     val quizId: String? = null,
     val hasEli5: Boolean = false
+=======
+    val eli5VideoId: String? = null
+>>>>>>> Stashed changes
 )
 
 @Serializable

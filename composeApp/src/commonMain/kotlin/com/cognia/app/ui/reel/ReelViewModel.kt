@@ -20,6 +20,7 @@ data class VideoPage(
     val title: String,
     val creatorName: String,
     val creatorId: String,
+<<<<<<< Updated upstream
     val streamUrl: String,
     val eli5StreamUrl: String?,
     val hasQuiz: Boolean = false,
@@ -39,6 +40,12 @@ data class ReelUiState(
     val error: String? = null,
     /** Set of video IDs currently in ELI5 mode */
     val eli5Videos: Set<String> = emptySet(),
+=======
+    val videoUrl: String?,
+    val thumbnailUrl: String?,
+    val hasQuiz: Boolean = false,
+    val eli5VideoId: String? = null
+>>>>>>> Stashed changes
 )
 
 class ReelViewModel : ViewModel() {
@@ -56,6 +63,7 @@ class ReelViewModel : ViewModel() {
         viewModelScope.launch {
             when (val result = api.getForYouFeed(page = 1, limit = 20)) {
                 is ApiResult.Success -> {
+<<<<<<< Updated upstream
                     val pages = mutableListOf<ReelPage>()
                     for (item in result.data.items) {
                         val streamUrl = ApiConfig.apiUrl("/videos/${item.id}/stream")
@@ -71,6 +79,18 @@ class ReelViewModel : ViewModel() {
                                 hasQuiz = item.hasQuiz,
                                 quizId = item.quizId,
                             )
+=======
+                    val videos = result.data.items.map { item ->
+                        VideoItem(
+                            id = item.id,
+                            title = item.title,
+                            creatorName = item.creatorName,
+                            creatorId = item.creatorId,
+                            videoUrl = null, // Video streaming URL would come from video detail
+                            thumbnailUrl = item.thumbnailUrl,
+                            hasQuiz = item.hasQuiz,
+                            eli5VideoId = item.eli5VideoId
+>>>>>>> Stashed changes
                         )
                         val qId = item.quizId
                         if (item.hasQuiz && qId != null) {
