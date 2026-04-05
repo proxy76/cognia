@@ -48,6 +48,9 @@ class SeedService {
 
         transaction {
             for (user in users) {
+                // Skip if this user already exists (e.g. test creator from ensureTestCreator)
+                val exists = UsersTable.selectAll().where { UsersTable.id eq user.id }.count() > 0
+                if (exists) continue
                 UsersTable.insert {
                     it[id] = user.id
                     it[email] = user.email

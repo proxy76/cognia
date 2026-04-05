@@ -102,8 +102,12 @@ echo "  ╚═══════════════════════
 echo -e "${RESET}"
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 1. SERVER
+# 0. BUILD SERVER + WEB IN ONE GRADLE INVOCATION
 # ══════════════════════════════════════════════════════════════════════════════
+# Gradle holds a daemon lock, so two concurrent ./gradlew calls block each
+# other.  Build everything we need in a single invocation first, then launch
+# the artefacts directly.
+
 if [[ "$SKIP_SERVER" == false ]]; then
     EXISTING=$(lsof -ti tcp:8080 2>/dev/null || true)
     if [[ -n "$EXISTING" ]]; then
@@ -111,19 +115,40 @@ if [[ "$SKIP_SERVER" == false ]]; then
         kill -9 $EXISTING 2>/dev/null || true
         sleep 1
     fi
+fi
+
+# Build the server fat JAR (single Gradle call, no daemon lock issues)
+if [[ "$SKIP_SERVER" == false ]]; then
     update_status SERVER "building"
-    (
-        if ./gradlew server:run -Pdevelopment > "$LOG_DIR/server.log" 2>&1; then
-            update_status SERVER "stopped"
-        else
-            update_status SERVER "FAILED"
-        fi
-    ) &
-    PIDS+=($!)
+    echo -e "${CYAN}[SERVER]${RESET} Building fat JAR..."
+    if ! ./gradlew server:buildFatJar -Pdevelopment > "$LOG_DIR/server-build.log" 2>&1; then
+        update_status SERVER "FAILED"
+        echo -e "${RED}[SERVER]${RESET} Build failed — see $LOG_DIR/server-build.log"
+    fi
 fi
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 2. WEB
+# 1. SERVER  (run the built JAR directly — frees Gradle for the web task)
+# ══════════════════════════════════════════════════════════════════════════════
+if [[ "$SKIP_SERVER" == false ]]; then
+    SERVER_JAR=$(find "$PROJECT_DIR/server/build/libs" -name '*-all.jar' 2>/dev/null | head -1)
+    if [[ -n "$SERVER_JAR" ]]; then
+        (
+            if java -Dio.ktor.development=true -jar "$SERVER_JAR" > "$LOG_DIR/server.log" 2>&1; then
+                update_status SERVER "stopped"
+            else
+                update_status SERVER "FAILED"
+            fi
+        ) &
+        PIDS+=($!)
+    else
+        echo -e "${RED}[SERVER]${RESET} Fat JAR not found after build"
+        update_status SERVER "FAILED"
+    fi
+fi
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 2. WEB  (Gradle is now free — no daemon lock contention)
 # ══════════════════════════════════════════════════════════════════════════════
 if [[ "$SKIP_WEB" == false ]]; then
     update_status WEB "building"
@@ -310,7 +335,7 @@ while IFS='=' read -r target state; do
     if [[ "$state" == "FAILED" ]]; then
         HAS_FAILURE=true
         case "$target" in
-            SERVER)  logfile="server.log" ;;
+            SERVER)  logfile="server-build.log" ;;
             WEB)     logfile="web.log" ;;
             ANDROID) logfile="android-build.log" ;;
             iOS)     logfile="ios-build.log" ;;
