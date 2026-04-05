@@ -27,13 +27,23 @@ kotlin {
     }
     
     js {
-        browser()
+        browser {
+            commonWebpackConfig {
+                devServer = devServer?.copy(port = 8081)
+                    ?: org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.DevServer(port = 8081)
+            }
+        }
         binaries.executable()
     }
     
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        browser()
+        browser {
+            commonWebpackConfig {
+                devServer = devServer?.copy(port = 8081)
+                    ?: org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.DevServer(port = 8081)
+            }
+        }
         binaries.executable()
     }
     

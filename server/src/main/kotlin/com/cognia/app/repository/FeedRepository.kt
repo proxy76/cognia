@@ -13,6 +13,8 @@ data class FeedVideoRow(
     val categoryName: String,
     val difficulty: String?,
     val hasQuiz: Boolean,
+    val quizId: String?,
+    val hasEli5: Boolean,
     val viewCount: Long
 )
 
@@ -47,6 +49,7 @@ class FeedRepository {
                 CategoriesTable.name,
                 VideosTable.difficulty,
                 QuizzesTable.id,
+                VideosTable.eli5VideoUrl,
                 viewCountExpr
             )
             .where { VideosTable.status eq "PUBLISHED" }
@@ -79,6 +82,8 @@ class FeedRepository {
                     categoryName = row[CategoriesTable.name],
                     difficulty = row[VideosTable.difficulty],
                     hasQuiz = row[QuizzesTable.id] != null,
+                    quizId = row[QuizzesTable.id],
+                    hasEli5 = row[VideosTable.eli5VideoUrl] != null,
                     viewCount = row[viewCountExpr]
                 )
             }
@@ -112,6 +117,7 @@ class FeedRepository {
                 CategoriesTable.name,
                 VideosTable.difficulty,
                 QuizzesTable.id,
+                VideosTable.eli5VideoUrl,
                 viewCountExpr
             )
             .where {
@@ -137,6 +143,8 @@ class FeedRepository {
                 categoryName = row[CategoriesTable.name],
                 difficulty = row[VideosTable.difficulty],
                 hasQuiz = row[QuizzesTable.id] != null,
+                quizId = row[QuizzesTable.id],
+                hasEli5 = row[VideosTable.eli5VideoUrl] != null,
                 viewCount = row[viewCountExpr]
             )
         }

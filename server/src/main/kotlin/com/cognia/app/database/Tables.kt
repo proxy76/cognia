@@ -58,6 +58,7 @@ object VideosTable : Table("videos") {
     val description = text("description").nullable()
     val categoryId = text("category_id").references(CategoriesTable.id)
     val videoUrl = text("video_url").nullable()
+    val eli5VideoUrl = text("eli5_video_url").nullable()
     val thumbnailUrl = text("thumbnail_url").nullable()
     val rawFilePath = text("raw_file_path").nullable()
     val status = text("status").default("DRAFT")

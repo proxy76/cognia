@@ -206,10 +206,11 @@ fun AppNavigation() {
             },
         ) { paddingValues ->
             // Center-constrain content on wide screens
+            // Immersive routes ignore scaffold padding (content goes behind nav bar)
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
+                    .then(if (isImmersive) Modifier else Modifier.padding(paddingValues)),
                 contentAlignment = Alignment.TopCenter,
             ) {
                 Box(
@@ -225,12 +226,15 @@ fun AppNavigation() {
                     ) {
                         // Main tabs
                         composable(Screen.Home.route) {
-                            FeedScreen(
-                                onNavigateToVideo = { videoId ->
-                                    navController.navigate(Screen.ReelPlayer.createRoute(videoId))
-                                },
+                            val homeReelViewModel: ReelViewModel = viewModel { ReelViewModel() }
+                            ReelPlayerScreen(
+                                viewModel = homeReelViewModel,
+                                onNavigateBack = { /* Already on home, no-op */ },
                                 onNavigateToCreator = { userId ->
                                     navController.navigate(Screen.UserProfile.createRoute(userId))
+                                },
+                                onNavigateToQuiz = { videoId ->
+                                    navController.navigate(Screen.QuizScreen.createRoute(videoId))
                                 }
                             )
                         }
@@ -269,7 +273,12 @@ fun AppNavigation() {
                             LaunchedEffect(authState.authSuccess) {
                                 val success = authState.authSuccess
                                 if (success != null && !success.isNewUser) {
-                                    navController.navigate(Screen.Home.route) {
+                                    val destination = if (success.role == "ADMIN" || success.role == "MODERATOR") {
+                                        Screen.ModerationDashboard.route
+                                    } else {
+                                        Screen.Home.route
+                                    }
+                                    navController.navigate(destination) {
                                         popUpTo(Screen.Welcome.route) { inclusive = true }
                                     }
                                     authViewModel.clearState()
@@ -343,7 +352,7 @@ fun AppNavigation() {
                         // Quiz screen
                         composable(Screen.QuizScreen.route) { backStackEntry ->
                             val quizId = backStackEntry.destination.route
-                                ?.removePrefix("quiz/")
+                                ?.substringAfterLast("/")
                                 ?: ""
                             QuizScreen(
                                 quizId = quizId,
@@ -354,7 +363,7 @@ fun AppNavigation() {
                         // Chat conversation
                         composable(Screen.ChatConversation.route) { backStackEntry ->
                             val conversationId = backStackEntry.destination.route
-                                ?.removePrefix("chat/")
+                                ?.substringAfterLast("/")
                                 ?: ""
                             val chatConversationViewModel: ChatConversationViewModel = viewModel { ChatConversationViewModel() }
                             ChatConversationScreen(

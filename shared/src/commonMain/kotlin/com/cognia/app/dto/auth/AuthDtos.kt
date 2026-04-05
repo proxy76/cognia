@@ -31,5 +31,6 @@ data class RefreshTokenRequest(val refreshToken: String)
 data class AuthResponse(
     val userId: String,
     val token: String,
-    val refreshToken: String
+    val refreshToken: String,
+    val role: String = "LEARNER"
 )

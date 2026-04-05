@@ -11,7 +11,9 @@ data class FeedItem(
     val thumbnailUrl: String? = null,
     val categoryName: String,
     val difficulty: String? = null,
-    val hasQuiz: Boolean = false
+    val hasQuiz: Boolean = false,
+    val quizId: String? = null,
+    val hasEli5: Boolean = false
 )
 
 @Serializable

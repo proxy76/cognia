@@ -3,6 +3,7 @@ package com.cognia.app.routes
 import com.cognia.app.auth.UserPrincipal
 import com.cognia.app.auth.authorize
 import com.cognia.app.config.AppConfig
+import com.cognia.app.dto.content.VideoCreateDraftRequest
 import com.cognia.app.dto.content.VideoDetailResponse
 import com.cognia.app.dto.content.VideoUpdateRequest
 import com.cognia.app.dto.content.VideoUploadResponse
@@ -103,6 +104,36 @@ fun Route.videoRoutes() {
                     } catch (e: IllegalArgumentException) {
                         call.respond(HttpStatusCode.BadRequest, ErrorBody(e.message ?: "Invalid request"))
                     }
+                }
+            }
+
+            // POST /draft — create a draft via JSON (no file upload)
+            authorize("REGULAR_CREATOR", "LICENSED_CREATOR") {
+                post("/draft") {
+                    val principal = call.principal<UserPrincipal>()
+                        ?: return@post call.respond(HttpStatusCode.Unauthorized, ErrorBody("Not authenticated"))
+
+                    val request = call.receive<VideoCreateDraftRequest>()
+                    if (request.title.isBlank()) {
+                        return@post call.respond(HttpStatusCode.BadRequest, ErrorBody("Title is required"))
+                    }
+                    if (request.categoryId.isBlank()) {
+                        return@post call.respond(HttpStatusCode.BadRequest, ErrorBody("Category ID is required"))
+                    }
+
+                    val video = videoService.createDraft(
+                        creatorId = principal.userId,
+                        title = request.title,
+                        description = request.description,
+                        categoryId = request.categoryId,
+                        rawFilePath = null
+                    )
+
+                    call.respond(HttpStatusCode.Created, VideoUploadResponse(
+                        id = video.id,
+                        status = video.status,
+                        message = "Video draft created successfully"
+                    ))
                 }
             }
 

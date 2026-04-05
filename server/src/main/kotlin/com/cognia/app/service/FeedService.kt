@@ -42,6 +42,8 @@ class FeedService(
         thumbnailUrl = thumbnailUrl,
         categoryName = categoryName,
         difficulty = difficulty,
-        hasQuiz = hasQuiz
+        hasQuiz = hasQuiz,
+        quizId = quizId,
+        hasEli5 = hasEli5
     )
 }

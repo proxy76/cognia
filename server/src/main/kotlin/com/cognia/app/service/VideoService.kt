@@ -2,10 +2,12 @@ package com.cognia.app.service
 
 import com.cognia.app.dto.content.VideoDetailResponse
 import com.cognia.app.dto.content.VideoUpdateRequest
+import com.cognia.app.repository.ModerationRepository
 import com.cognia.app.repository.VideoRepository
 
 class VideoService(
-    private val videoRepository: VideoRepository
+    private val videoRepository: VideoRepository,
+    private val moderationRepository: ModerationRepository
 ) {
 
     fun createDraft(
@@ -59,6 +61,9 @@ class VideoService(
         val updated = videoRepository.updateStatus(id, "PENDING_REVIEW")
             ?: throw VideoNotFoundException(id)
 
+        // Create a moderation review record so it appears in the queue
+        moderationRepository.createReview(id, "VIDEO", isPostPublication = false)
+
         return updated.toResponse()
     }
 
@@ -89,6 +94,7 @@ class VideoService(
         description = description,
         categoryId = categoryId,
         videoUrl = videoUrl,
+        eli5VideoUrl = eli5VideoUrl,
         thumbnailUrl = thumbnailUrl,
         status = status,
         difficulty = difficulty,

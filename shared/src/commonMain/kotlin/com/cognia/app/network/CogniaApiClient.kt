@@ -29,6 +29,10 @@ import com.cognia.app.dto.social.FollowerListResponse
 import com.cognia.app.dto.social.FollowingListResponse
 import com.cognia.app.dto.social.FriendListResponse
 import com.cognia.app.dto.social.PendingRequestsResponse
+import com.cognia.app.dto.content.VideoCreateDraftRequest
+import com.cognia.app.dto.content.VideoDetailResponse
+import com.cognia.app.dto.content.VideoUploadResponse
+import com.cognia.app.dto.moderation.*
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -134,6 +138,12 @@ class CogniaApiClient(
             }
         }
 
+    suspend fun getVideoDetail(videoId: String): ApiResult<VideoDetailResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/videos/$videoId")) }
+
+    suspend fun getQuizByVideoId(videoId: String): ApiResult<QuizDetailResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/quizzes/by-video/$videoId")) }
+
     // ── Chat ────────────────────────────────────────────────────────
     suspend fun getConversations(): ApiResult<ConversationListResponse> =
         safeCall { client.get(ApiConfig.apiUrl("/chat/conversations")) }
@@ -211,6 +221,54 @@ class CogniaApiClient(
 
     suspend fun getPendingFriendRequests(): ApiResult<PendingRequestsResponse> =
         safeCall { client.get(ApiConfig.apiUrl("/friends/requests")) }
+
+    // ── Videos ──────────────────────────────────────────────────────
+    suspend fun createVideoDraft(title: String, description: String?, categoryId: String, difficulty: String? = null): ApiResult<VideoUploadResponse> =
+        safeCall {
+            client.post(ApiConfig.apiUrl("/videos/draft")) {
+                contentType(ContentType.Application.Json)
+                setBody(VideoCreateDraftRequest(title, description, categoryId, difficulty))
+            }
+        }
+
+    suspend fun submitVideoForReview(videoId: String): ApiResult<VideoDetailResponse> =
+        safeCall { client.post(ApiConfig.apiUrl("/videos/$videoId/submit")) }
+
+    // ── Moderation ──────────────────────────────────────────────────
+    suspend fun getModerationQueue(): ApiResult<ModerationQueueResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/moderation/queue")) }
+
+    suspend fun decideModerationReview(
+        reviewId: String,
+        decision: String,
+        reason: String? = null,
+        issueStrike: Boolean = false
+    ): ApiResult<ModerationReviewResponse> =
+        safeCall {
+            client.post(ApiConfig.apiUrl("/moderation/$reviewId/decide")) {
+                contentType(ContentType.Application.Json)
+                setBody(ModerationDecisionRequest(decision, reason, issueStrike))
+            }
+        }
+
+    // ── Reports ────────────────────────────────────────────────────
+    suspend fun getReports(): ApiResult<ReportListResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/reports")) }
+
+    // ── License Requests ───────────────────────────────────────────
+    suspend fun getLicenseRequests(): ApiResult<LicenseRequestListResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/license/requests")) }
+
+    suspend fun approveLicenseRequest(id: String): ApiResult<LicenseRequestResponse> =
+        safeCall { client.post(ApiConfig.apiUrl("/license/$id/approve")) }
+
+    suspend fun rejectLicenseRequest(id: String, reason: String? = null): ApiResult<LicenseRequestResponse> =
+        safeCall {
+            client.post(ApiConfig.apiUrl("/license/$id/reject")) {
+                contentType(ContentType.Application.Json)
+                setBody(LicenseRejectRequest(reason))
+            }
+        }
 
     // ── Internal helpers ────────────────────────────────────────────
     private suspend inline fun <reified T> safeCall(block: () -> HttpResponse): ApiResult<T> {

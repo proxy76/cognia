@@ -38,4 +38,4 @@ val VideoSidePanelWidth = 320.dp
 val LocalWindowWidthClass = compositionLocalOf { WindowWidthClass.COMPACT }
 
 /** Routes that should use full-width immersive layout (no mobile constraint). */
-val immersiveRoutes = setOf("reel/{videoId}")
+val immersiveRoutes = setOf("reel/{videoId}", "home")

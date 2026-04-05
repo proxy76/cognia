@@ -35,6 +35,24 @@ fun Route.quizRoutes() {
                 }
             }
 
+            // GET /by-video/{videoId} — get quiz by video ID
+            get("/by-video/{videoId}") {
+                val principal = call.principal<UserPrincipal>()
+                val videoId = call.parameters["videoId"]
+                    ?: return@get call.respond(HttpStatusCode.BadRequest, ErrorBody("Missing video ID"))
+
+                try {
+                    val quizzes = quizService.getQuizzesByVideoId(videoId, principal?.userId)
+                    if (quizzes.isEmpty()) {
+                        call.respond(HttpStatusCode.NotFound, ErrorBody("No quiz found for this video"))
+                    } else {
+                        call.respond(HttpStatusCode.OK, quizzes.first())
+                    }
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.NotFound, ErrorBody(e.message ?: "Quiz not found"))
+                }
+            }
+
             // GET /{id} — get quiz (hides answers for non-owner)
             get("/{id}") {
                 val principal = call.principal<UserPrincipal>()

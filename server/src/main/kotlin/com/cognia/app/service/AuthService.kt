@@ -98,7 +98,8 @@ class AuthService(
         return AuthResponse(
             userId = userId,
             token = token,
-            refreshToken = refreshToken
+            refreshToken = refreshToken,
+            role = role
         )
     }
 

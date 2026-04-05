@@ -24,7 +24,8 @@ data class AuthUiState(
 data class AuthSuccessData(
     val userId: String,
     val token: String,
-    val isNewUser: Boolean
+    val isNewUser: Boolean,
+    val role: String = "LEARNER"
 )
 
 class AuthViewModel : ViewModel() {
@@ -86,7 +87,8 @@ class AuthViewModel : ViewModel() {
                         authSuccess = AuthSuccessData(
                             userId = result.data.userId,
                             token = result.data.token,
-                            isNewUser = true
+                            isNewUser = true,
+                            role = result.data.role
                         )
                     )
                 }
@@ -138,7 +140,8 @@ class AuthViewModel : ViewModel() {
                         authSuccess = AuthSuccessData(
                             userId = result.data.userId,
                             token = result.data.token,
-                            isNewUser = false
+                            isNewUser = false,
+                            role = result.data.role
                         )
                     )
                 }

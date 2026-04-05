@@ -19,7 +19,8 @@ data class FeedItemUi(
     val thumbnailUrl: String?,
     val categoryName: String,
     val difficulty: String?,
-    val hasQuiz: Boolean
+    val hasQuiz: Boolean,
+    val hasEli5: Boolean = false
 )
 
 data class FeedUiState(
@@ -67,7 +68,8 @@ class FeedViewModel : ViewModel() {
                             thumbnailUrl = item.thumbnailUrl,
                             categoryName = item.categoryName,
                             difficulty = item.difficulty,
-                            hasQuiz = item.hasQuiz
+                            hasQuiz = item.hasQuiz,
+                            hasEli5 = item.hasEli5
                         )
                     }
                     _state.value = _state.value.copy(

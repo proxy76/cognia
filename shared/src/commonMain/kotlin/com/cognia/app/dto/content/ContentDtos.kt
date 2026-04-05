@@ -49,6 +49,14 @@ data class VideoUploadResponse(
 )
 
 @Serializable
+data class VideoCreateDraftRequest(
+    val title: String,
+    val description: String? = null,
+    val categoryId: String,
+    val difficulty: String? = null
+)
+
+@Serializable
 data class VideoDetailResponse(
     val id: String,
     val creatorId: String,
@@ -56,6 +64,7 @@ data class VideoDetailResponse(
     val description: String? = null,
     val categoryId: String,
     val videoUrl: String? = null,
+    val eli5VideoUrl: String? = null,
     val thumbnailUrl: String? = null,
     val status: String,
     val difficulty: String? = null,

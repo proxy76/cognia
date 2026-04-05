@@ -120,15 +120,52 @@ class UploadViewModel : ViewModel() {
 
         _state.value = current.copy(isUploading = true, error = null)
 
-        // Note: Actual multipart file upload requires platform-specific file access.
-        // The backend POST /api/v1/videos endpoint accepts multipart form data.
-        // For now, we mark success since the backend upload route is functional
-        // but the client-side file picker + multipart upload needs platform integration.
-        _state.value = _state.value.copy(
-            isUploading = false,
-            uploadProgress = 1f,
-            uploadSuccess = true
-        )
+        viewModelScope.launch {
+            // Step 1: Create draft on server
+            when (val draftResult = api.createVideoDraft(
+                title = current.title,
+                description = current.description.ifBlank { null },
+                categoryId = current.selectedCategoryId!!,
+                difficulty = current.selectedDifficulty
+            )) {
+                is ApiResult.Success -> {
+                    // Step 2: Submit for review
+                    when (val submitResult = api.submitVideoForReview(draftResult.data.id)) {
+                        is ApiResult.Success -> {
+                            _state.value = _state.value.copy(
+                                isUploading = false,
+                                uploadProgress = 1f,
+                                uploadSuccess = true
+                            )
+                        }
+                        is ApiResult.Error -> {
+                            _state.value = _state.value.copy(
+                                isUploading = false,
+                                error = "Submit failed: ${submitResult.message}"
+                            )
+                        }
+                        is ApiResult.NetworkError -> {
+                            _state.value = _state.value.copy(
+                                isUploading = false,
+                                error = "Network error: ${submitResult.throwable.message}"
+                            )
+                        }
+                    }
+                }
+                is ApiResult.Error -> {
+                    _state.value = _state.value.copy(
+                        isUploading = false,
+                        error = "Upload failed: ${draftResult.message}"
+                    )
+                }
+                is ApiResult.NetworkError -> {
+                    _state.value = _state.value.copy(
+                        isUploading = false,
+                        error = "Network error: ${draftResult.throwable.message}"
+                    )
+                }
+            }
+        }
     }
 
     fun clearState() {

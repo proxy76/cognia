@@ -59,14 +59,13 @@ class QuizService(
             ?: throw QuizNotFoundException(id)
 
         val questionsWithOptions = quizRepository.getQuestionsWithOptions(id)
-        val isOwner = requesterId != null && requesterId == quiz.creatorId
 
         val questions = questionsWithOptions.map { qwo ->
             QuestionResponse(
                 id = qwo.question.id,
                 questionText = qwo.question.questionText,
                 options = qwo.options.map { OptionResponse(it.id, it.text) },
-                correctOptionIndex = if (isOwner) qwo.question.correctOptionIndex else null
+                correctOptionIndex = qwo.question.correctOptionIndex
             )
         }
 
@@ -109,6 +108,35 @@ class QuizService(
         quizRepository.updateStatus(id, "PUBLISHED")
 
         return getQuiz(id, userId)
+    }
+
+    fun getQuizzesByVideoId(videoId: String, requesterId: String?): List<QuizDetailResponse> {
+        val quizzes = quizRepository.findByVideoId(videoId)
+        return quizzes.map { quiz ->
+            val questionsWithOptions = quizRepository.getQuestionsWithOptions(quiz.id)
+            val isOwner = requesterId != null && requesterId == quiz.creatorId
+
+            val questions = questionsWithOptions.map { qwo ->
+                QuestionResponse(
+                    id = qwo.question.id,
+                    questionText = qwo.question.questionText,
+                    options = qwo.options.map { OptionResponse(it.id, it.text) },
+                    correctOptionIndex = if (isOwner) qwo.question.correctOptionIndex else null
+                )
+            }
+
+            QuizDetailResponse(
+                id = quiz.id,
+                creatorId = quiz.creatorId,
+                title = quiz.title,
+                quizType = quiz.quizType,
+                categoryId = quiz.categoryId,
+                difficulty = quiz.difficulty,
+                videoId = quiz.videoId,
+                status = quiz.status,
+                questions = questions
+            )
+        }
     }
 
     fun getCreatorQuizzes(creatorId: String): List<QuizSummaryResponse> {

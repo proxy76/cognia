@@ -3,28 +3,42 @@ package com.cognia.app.ui.reel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cognia.app.network.ApiClientProvider
+import com.cognia.app.network.ApiConfig
 import com.cognia.app.network.ApiResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class ReelUiState(
-    val currentIndex: Int = 0,
-    val videos: List<VideoItem> = emptyList(),
-    val isPlaying: Boolean = true,
-    val isBuffering: Boolean = false,
-    val error: String? = null
-)
+/** A reel page is either a video or an inline quiz. */
+sealed class ReelPage {
+    abstract val key: String
+}
 
-data class VideoItem(
+data class VideoPage(
     val id: String,
     val title: String,
     val creatorName: String,
     val creatorId: String,
-    val videoUrl: String?,
-    val thumbnailUrl: String?,
-    val hasQuiz: Boolean = false
+    val streamUrl: String,
+    val eli5StreamUrl: String?,
+    val hasQuiz: Boolean = false,
+    val quizId: String? = null,
+    override val key: String = "video-$id"
+) : ReelPage()
+
+data class QuizPage(
+    val quizId: String,
+    val videoTitle: String,
+    override val key: String = "quiz-$quizId"
+) : ReelPage()
+
+data class ReelUiState(
+    val pages: List<ReelPage> = emptyList(),
+    val isLoading: Boolean = true,
+    val error: String? = null,
+    /** Set of video IDs currently in ELI5 mode */
+    val eli5Videos: Set<String> = emptySet(),
 )
 
 class ReelViewModel : ViewModel() {
@@ -38,52 +52,52 @@ class ReelViewModel : ViewModel() {
     }
 
     fun loadVideos() {
+        _state.value = _state.value.copy(isLoading = true, error = null)
         viewModelScope.launch {
             when (val result = api.getForYouFeed(page = 1, limit = 20)) {
                 is ApiResult.Success -> {
-                    val videos = result.data.items.map { item ->
-                        VideoItem(
-                            id = item.id,
-                            title = item.title,
-                            creatorName = item.creatorName,
-                            creatorId = item.creatorId,
-                            videoUrl = null, // Video streaming URL would come from video detail
-                            thumbnailUrl = item.thumbnailUrl,
-                            hasQuiz = item.hasQuiz
+                    val pages = mutableListOf<ReelPage>()
+                    for (item in result.data.items) {
+                        val streamUrl = ApiConfig.apiUrl("/videos/${item.id}/stream")
+                        val eli5Url = if (item.hasEli5) ApiConfig.apiUrl("/videos/${item.id}/eli5-stream") else null
+                        pages.add(
+                            VideoPage(
+                                id = item.id,
+                                title = item.title,
+                                creatorName = item.creatorName,
+                                creatorId = item.creatorId,
+                                streamUrl = streamUrl,
+                                eli5StreamUrl = eli5Url,
+                                hasQuiz = item.hasQuiz,
+                                quizId = item.quizId,
+                            )
                         )
+                        val qId = item.quizId
+                        if (item.hasQuiz && qId != null) {
+                            pages.add(QuizPage(quizId = qId, videoTitle = item.title))
+                        }
                     }
-                    _state.value = ReelUiState(videos = videos)
+                    _state.value = ReelUiState(pages = pages, isLoading = false)
                 }
                 is ApiResult.Error -> {
-                    _state.value = _state.value.copy(error = result.message)
+                    _state.value = _state.value.copy(isLoading = false, error = result.message)
                 }
                 is ApiResult.NetworkError -> {
-                    _state.value = _state.value.copy(error = "Network error: ${result.throwable.message}")
+                    _state.value = _state.value.copy(isLoading = false, error = "Network error")
                 }
             }
         }
     }
 
-    fun swipeToNext() {
+    fun toggleEli5(videoId: String) {
         val current = _state.value
-        if (current.currentIndex < current.videos.size - 1) {
-            _state.value = current.copy(currentIndex = current.currentIndex + 1)
+        val newSet = if (videoId in current.eli5Videos) {
+            current.eli5Videos - videoId
+        } else {
+            current.eli5Videos + videoId
         }
+        _state.value = current.copy(eli5Videos = newSet)
     }
 
-    fun swipeToPrevious() {
-        val current = _state.value
-        if (current.currentIndex > 0) {
-            _state.value = current.copy(currentIndex = current.currentIndex - 1)
-        }
-    }
-
-    fun togglePlayPause() {
-        val current = _state.value
-        _state.value = current.copy(isPlaying = !current.isPlaying)
-    }
-
-    fun onBuffering(isBuffering: Boolean) {
-        _state.value = _state.value.copy(isBuffering = isBuffering)
-    }
+    fun isEli5(videoId: String): Boolean = videoId in _state.value.eli5Videos
 }

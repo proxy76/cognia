@@ -240,6 +240,9 @@ private fun FeedCard(
                     if (item.hasQuiz) {
                         CogniaChip(text = "Quiz", accent = true)
                     }
+                    if (item.hasEli5) {
+                        CogniaChip(text = "ELI5", accent = true)
+                    }
                 }
             }
         }

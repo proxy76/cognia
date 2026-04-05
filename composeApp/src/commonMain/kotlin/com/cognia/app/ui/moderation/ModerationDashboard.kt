@@ -10,18 +10,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cognia.app.dto.moderation.LicenseRequestResponse
+import com.cognia.app.dto.moderation.ModerationQueueItem
+import com.cognia.app.dto.moderation.ReportResponse
 import com.cognia.app.ui.theme.NeonCyan
 import com.cognia.app.ui.theme.NeonPurple
 import com.cognia.app.ui.theme.NeonPurpleBright
 import com.cognia.app.ui.theme.SurfaceDarkCard
 
-/**
- * Web-only moderation dashboard placeholder.
- * Displays mock data for pending reviews, reports, and license requests.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ModerationDashboard() {
+fun ModerationDashboard(
+    viewModel: ModerationViewModel = viewModel { ModerationViewModel() }
+) {
+    val state by viewModel.state.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Pending Reviews", "Reports", "License Requests")
 
@@ -71,11 +74,28 @@ fun ModerationDashboard() {
                 }
             }
 
-            Box(modifier = Modifier.padding(16.dp)) {
-                when (selectedTab) {
-                    0 -> PendingReviewsList()
-                    1 -> ReportsList()
-                    2 -> LicenseRequestsList()
+            if (state.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = NeonPurple)
+                }
+            } else {
+                Box(modifier = Modifier.padding(16.dp)) {
+                    when (selectedTab) {
+                        0 -> PendingReviewsList(
+                            reviews = state.pendingReviews,
+                            onApprove = { viewModel.approveReview(it) },
+                            onReject = { viewModel.rejectReview(it) }
+                        )
+                        1 -> ReportsList(reports = state.reports)
+                        2 -> LicenseRequestsList(
+                            requests = state.licenseRequests,
+                            onApprove = { viewModel.approveLicense(it) },
+                            onReject = { viewModel.rejectLicense(it) }
+                        )
+                    }
                 }
             }
         }
@@ -83,17 +103,18 @@ fun ModerationDashboard() {
 }
 
 @Composable
-private fun PendingReviewsList() {
-    val mockReviews = remember {
-        listOf(
-            MockReview("review-1", "VIDEO", "Introduction to Kotlin", "Alice"),
-            MockReview("review-2", "QUIZ", "Kotlin Basics Quiz", "Bob"),
-            MockReview("review-3", "VIDEO", "Advanced Coroutines", "Charlie")
-        )
+private fun PendingReviewsList(
+    reviews: List<ModerationQueueItem>,
+    onApprove: (String) -> Unit,
+    onReject: (String) -> Unit
+) {
+    if (reviews.isEmpty()) {
+        EmptyState("No pending reviews")
+        return
     }
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        items(mockReviews) { review ->
+        items(reviews) { review ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = SurfaceDarkCard),
@@ -107,21 +128,21 @@ private fun PendingReviewsList() {
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
-                        text = "${review.contentType} by ${review.creator}",
+                        text = "${review.contentType} by ${review.creator.displayName}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
-                            onClick = { /* TODO: approve */ },
+                            onClick = { onApprove(review.reviewId) },
                             colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
                             shape = MaterialTheme.shapes.small,
                         ) {
                             Text("Approve", color = MaterialTheme.colorScheme.onPrimary)
                         }
                         OutlinedButton(
-                            onClick = { /* TODO: reject */ },
+                            onClick = { onReject(review.reviewId) },
                             border = ButtonDefaults.outlinedButtonBorder(enabled = true),
                             shape = MaterialTheme.shapes.small,
                         ) {
@@ -135,17 +156,14 @@ private fun PendingReviewsList() {
 }
 
 @Composable
-private fun ReportsList() {
-    val mockReports = remember {
-        listOf(
-            MockReport("report-1", "VIDEO", "Inappropriate content", "PENDING"),
-            MockReport("report-2", "QUIZ", "Misleading questions", "PENDING"),
-            MockReport("report-3", "VIDEO", "Copyright violation", "REVIEWED")
-        )
+private fun ReportsList(reports: List<ReportResponse>) {
+    if (reports.isEmpty()) {
+        EmptyState("No reports")
+        return
     }
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        items(mockReports) { report ->
+        items(reports) { report ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = SurfaceDarkCard),
@@ -190,17 +208,18 @@ private fun ReportsList() {
 }
 
 @Composable
-private fun LicenseRequestsList() {
-    val mockRequests = remember {
-        listOf(
-            MockLicenseRequest("req-1", "Alice", "PENDING"),
-            MockLicenseRequest("req-2", "Bob", "APPROVED"),
-            MockLicenseRequest("req-3", "Charlie", "PENDING")
-        )
+private fun LicenseRequestsList(
+    requests: List<LicenseRequestResponse>,
+    onApprove: (String) -> Unit,
+    onReject: (String) -> Unit
+) {
+    if (requests.isEmpty()) {
+        EmptyState("No license requests")
+        return
     }
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        items(mockRequests) { request ->
+        items(requests) { request ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = SurfaceDarkCard),
@@ -213,7 +232,7 @@ private fun LicenseRequestsList() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Creator: ${request.creatorName}",
+                            text = "Creator: ${request.creatorId}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -241,14 +260,14 @@ private fun LicenseRequestsList() {
                         Spacer(modifier = Modifier.height(12.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(
-                                onClick = { /* TODO: approve */ },
+                                onClick = { onApprove(request.id) },
                                 colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
                                 shape = MaterialTheme.shapes.small,
                             ) {
                                 Text("Approve", color = MaterialTheme.colorScheme.onPrimary)
                             }
                             OutlinedButton(
-                                onClick = { /* TODO: reject */ },
+                                onClick = { onReject(request.id) },
                                 shape = MaterialTheme.shapes.small,
                             ) {
                                 Text("Reject", color = MaterialTheme.colorScheme.error)
@@ -261,22 +280,16 @@ private fun LicenseRequestsList() {
     }
 }
 
-private data class MockReview(
-    val id: String,
-    val contentType: String,
-    val title: String,
-    val creator: String
-)
-
-private data class MockReport(
-    val id: String,
-    val contentType: String,
-    val reason: String,
-    val status: String
-)
-
-private data class MockLicenseRequest(
-    val id: String,
-    val creatorName: String,
-    val status: String
-)
+@Composable
+private fun EmptyState(message: String) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
