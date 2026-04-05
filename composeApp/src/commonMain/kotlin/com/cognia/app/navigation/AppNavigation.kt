@@ -20,10 +20,14 @@ import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -58,6 +62,7 @@ import com.cognia.app.ui.analytics.AnalyticsViewModel
 import com.cognia.app.ui.leaderboard.LeaderboardScreen
 import com.cognia.app.ui.leaderboard.LeaderboardViewModel
 import com.cognia.app.ui.moderation.ModerationDashboard
+import com.cognia.app.ui.moderation.ModerationViewModel
 import com.cognia.app.ui.theme.DashboardContentMaxWidth
 import com.cognia.app.ui.theme.LocalWindowWidthClass
 import com.cognia.app.ui.theme.MobileContentMaxWidth
@@ -65,6 +70,8 @@ import com.cognia.app.ui.theme.NeonPurple
 import com.cognia.app.ui.theme.SurfaceDark
 import com.cognia.app.ui.theme.WindowWidthClass
 import com.cognia.app.network.ApiClientProvider
+import com.cognia.app.network.ApiResult
+import kotlinx.coroutines.launch
 
 /** Routes that use a wider layout on desktop (dashboards, analytics). */
 private val wideLayoutRoutes = setOf(
@@ -84,12 +91,20 @@ fun AppNavigation() {
 
     val authViewModel: AuthViewModel = viewModel { AuthViewModel() }
 
-    // Auto-login: if tokens exist from a previous session (e.g. stored in localStorage),
-    // skip the welcome/login screens and go directly to Home.
+    // Auto-login: if stored tokens are valid, navigate to Home in the background
     LaunchedEffect(Unit) {
         if (ApiClientProvider.tokenStorage.hasStoredTokens()) {
-            navController.navigate(Screen.Home.route) {
-                popUpTo(Screen.Welcome.route) { inclusive = true }
+            val result = try {
+                ApiClientProvider.client.getMyProfile()
+            } catch (_: Exception) {
+                null
+            }
+            if (result is ApiResult.Success) {
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Welcome.route) { inclusive = true }
+                }
+            } else {
+                ApiClientProvider.tokenStorage.clearTokens()
             }
         }
     }
@@ -256,7 +271,21 @@ fun AppNavigation() {
                         }
                         composable(Screen.Profile.route) {
                             val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel() }
-                            ProfileScreen(viewModel = profileViewModel)
+                            val scope = androidx.compose.runtime.rememberCoroutineScope()
+                            ProfileScreen(
+                                viewModel = profileViewModel,
+                                onLogout = {
+                                    scope.launch {
+                                        ApiClientProvider.tokenStorage.clearTokens()
+                                    }
+                                    navController.navigate(Screen.Welcome.route) {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                },
+                                onNavigateToModeration = {
+                                    navController.navigate(Screen.ModerationDashboard.route)
+                                }
+                            )
                         }
 
                         // Auth screens
@@ -415,7 +444,10 @@ fun AppNavigation() {
                         }
 
                         // Moderation Dashboard (wide layout, web-only)
-                        composable(Screen.ModerationDashboard.route) { ModerationDashboard() }
+                        composable(Screen.ModerationDashboard.route) {
+                            val moderationViewModel: ModerationViewModel = viewModel { ModerationViewModel() }
+                            ModerationDashboard(viewModel = moderationViewModel)
+                        }
 
                         // Settings (placeholder)
                         composable(Screen.Settings.route) { PlaceholderScreen("Settings") }

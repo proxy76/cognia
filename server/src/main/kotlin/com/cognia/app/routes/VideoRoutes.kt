@@ -10,6 +10,7 @@ import com.cognia.app.service.InvalidStateTransitionException
 import com.cognia.app.service.VideoAccessDeniedException
 import com.cognia.app.service.VideoNotFoundException
 import com.cognia.app.service.VideoService
+import com.cognia.app.service.ModerationService
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.auth.*
@@ -25,11 +26,12 @@ private val ALLOWED_EXTENSIONS = setOf("mp4", "mov", "avi", "mkv", "webm")
 fun Route.videoRoutes() {
     val videoService by application.inject<VideoService>()
     val appConfig by application.inject<AppConfig>()
+    val moderationService by application.inject<ModerationService>()
 
     route("/api/v1/videos") {
         authenticate("auth-jwt") {
             // POST / — multipart upload (creators only)
-            authorize("REGULAR_CREATOR", "LICENSED_CREATOR") {
+            authorize("LEARNER", "REGULAR_CREATOR", "LICENSED_CREATOR") {
                 post {
                     val principal = call.principal<UserPrincipal>()
                         ?: return@post call.respond(HttpStatusCode.Unauthorized, ErrorBody("Not authenticated"))
@@ -87,7 +89,7 @@ fun Route.videoRoutes() {
                             return@post call.respond(HttpStatusCode.BadRequest, ErrorBody("Category ID is required"))
                         }
 
-                        val video = videoService.createDraft(
+                        val draft = videoService.createDraft(
                             creatorId = principal.userId,
                             title = title,
                             description = description,
@@ -95,11 +97,25 @@ fun Route.videoRoutes() {
                             rawFilePath = filePath
                         )
 
-                        call.respond(HttpStatusCode.Created, VideoUploadResponse(
-                            id = video.id,
-                            status = video.status,
-                            message = "Video draft created successfully"
-                        ))
+                        // Auto-route based on role:
+                        // LICENSED_CREATOR → instant publish
+                        // Everyone else   → submit for moderation review
+                        if (principal.role == "LICENSED_CREATOR") {
+                            val published = videoService.publishDirect(draft.id, principal.userId, principal.role)
+                            call.respond(HttpStatusCode.Created, VideoUploadResponse(
+                                id = published.id,
+                                status = published.status,
+                                message = "Video published successfully"
+                            ))
+                        } else {
+                            val submitted = videoService.submitForReview(draft.id, principal.userId)
+                            moderationService.createReview(submitted.id, "VIDEO")
+                            call.respond(HttpStatusCode.Created, VideoUploadResponse(
+                                id = submitted.id,
+                                status = submitted.status,
+                                message = "Video submitted for review"
+                            ))
+                        }
                     } catch (e: IllegalArgumentException) {
                         call.respond(HttpStatusCode.BadRequest, ErrorBody(e.message ?: "Invalid request"))
                     }

@@ -57,6 +57,8 @@ class SimpleTokenStorage(
     /** Returns true if we have a stored access token (e.g. from a previous session). */
     fun hasStoredTokens(): Boolean = accessToken != null
 
+    override fun currentAccessToken(): String? = accessToken
+
     override suspend fun getAccessToken(): String? = accessToken
     override suspend fun getRefreshToken(): String? = refreshToken
 

@@ -31,6 +31,13 @@ import com.cognia.app.dto.social.FriendListResponse
 import com.cognia.app.dto.social.PendingRequestsResponse
 import com.cognia.app.dto.content.VideoUploadResponse
 import com.cognia.app.dto.content.VideoDetailResponse
+import com.cognia.app.dto.moderation.ModerationDecisionRequest
+import com.cognia.app.dto.moderation.ModerationQueueResponse
+import com.cognia.app.dto.moderation.ModerationReviewResponse
+import com.cognia.app.dto.moderation.ModerationReviewListResponse
+import com.cognia.app.dto.moderation.LicenseRejectRequest
+import com.cognia.app.dto.moderation.LicenseRequestResponse
+import com.cognia.app.dto.moderation.LicenseRequestListResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -244,6 +251,44 @@ class CogniaApiClient(
 
     suspend fun getPendingFriendRequests(): ApiResult<PendingRequestsResponse> =
         safeCall { client.get(ApiConfig.apiUrl("/friends/requests")) }
+
+    // ── Moderation ──────────────────────────────────────────────────
+    suspend fun getModerationQueue(): ApiResult<ModerationQueueResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/moderation/queue")) }
+
+    suspend fun decideModerationReview(
+        reviewId: String,
+        decision: String,
+        reason: String? = null,
+        issueStrike: Boolean = false
+    ): ApiResult<ModerationReviewResponse> =
+        safeCall {
+            client.post(ApiConfig.apiUrl("/moderation/$reviewId/decide")) {
+                contentType(ContentType.Application.Json)
+                setBody(ModerationDecisionRequest(decision = decision, reason = reason, issueStrike = issueStrike))
+            }
+        }
+
+    suspend fun getModerationHistory(): ApiResult<ModerationReviewListResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/moderation/reviews")) }
+
+    // ── License Requests ────────────────────────────────────────────
+    suspend fun getLicenseRequests(): ApiResult<LicenseRequestListResponse> =
+        safeCall { client.get(ApiConfig.apiUrl("/license/requests")) }
+
+    suspend fun approveLicenseRequest(requestId: String): ApiResult<LicenseRequestResponse> =
+        safeCall { client.post(ApiConfig.apiUrl("/license/$requestId/approve")) }
+
+    suspend fun rejectLicenseRequest(requestId: String, reason: String? = null): ApiResult<LicenseRequestResponse> =
+        safeCall {
+            client.post(ApiConfig.apiUrl("/license/$requestId/reject")) {
+                contentType(ContentType.Application.Json)
+                setBody(LicenseRejectRequest(reason = reason))
+            }
+        }
+
+    suspend fun submitVideoForReview(videoId: String): ApiResult<VideoDetailResponse> =
+        safeCall { client.post(ApiConfig.apiUrl("/videos/$videoId/submit")) }
 
     // ── Internal helpers ────────────────────────────────────────────
     private suspend inline fun <reified T> safeCall(block: () -> HttpResponse): ApiResult<T> {

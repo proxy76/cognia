@@ -5,6 +5,9 @@ interface TokenProvider {
     suspend fun getRefreshToken(): String?
     suspend fun refreshTokens(): TokenPair?
     suspend fun clearTokens()
+
+    /** Synchronous access to the current token (for non-suspend contexts like defaultRequest). */
+    fun currentAccessToken(): String?
 }
 
 data class TokenPair(

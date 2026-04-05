@@ -2,10 +2,10 @@ package com.cognia.app.network
 
 import io.ktor.client.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.auth.*
-import io.ktor.client.plugins.auth.providers.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
+import io.ktor.client.request.*
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
@@ -22,29 +22,23 @@ object HttpClientFactory {
                 })
             }
 
+            install(HttpTimeout) {
+                requestTimeoutMillis = 30_000
+                connectTimeoutMillis = 15_000
+            }
+
             install(Logging) {
                 logger = Logger.DEFAULT
                 level = LogLevel.HEADERS
             }
-
+        }.also { client ->
             if (tokenProvider != null) {
-                install(Auth) {
-                    bearer {
-                        loadTokens {
-                            val token = tokenProvider.getAccessToken()
-                            val refresh = tokenProvider.getRefreshToken()
-                            if (token != null) BearerTokens(token, refresh ?: "") else null
-                        }
-                        refreshTokens {
-                            val newTokens = tokenProvider.refreshTokens()
-                            if (newTokens != null) BearerTokens(newTokens.accessToken, newTokens.refreshToken) else null
-                        }
+                client.requestPipeline.intercept(HttpRequestPipeline.State) {
+                    val token = tokenProvider.currentAccessToken()
+                    if (token != null) {
+                        context.header(HttpHeaders.Authorization, "Bearer $token")
                     }
                 }
-            }
-
-            defaultRequest {
-                url(ApiConfig.baseUrl)
             }
         }
     }

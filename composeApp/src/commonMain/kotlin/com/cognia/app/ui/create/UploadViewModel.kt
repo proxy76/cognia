@@ -22,6 +22,7 @@ data class UploadUiState(
     val isUploading: Boolean = false,
     val uploadProgress: Float = 0f,
     val uploadSuccess: Boolean = false,
+    val pendingReview: Boolean = false,
     val error: String? = null
 )
 
@@ -128,7 +129,6 @@ class UploadViewModel : ViewModel() {
         _state.value = current.copy(isUploading = true, error = null)
 
         viewModelScope.launch {
-            // Step 1: Upload video via multipart
             val uploadResult = api.uploadVideo(
                 title = current.title,
                 description = current.description.ifBlank { null },
@@ -139,34 +139,15 @@ class UploadViewModel : ViewModel() {
 
             when (uploadResult) {
                 is ApiResult.Success -> {
-                    val videoId = uploadResult.data.id
-
-                    // Step 2: Auto-publish for licensed creators
-                    val publishResult = api.publishVideo(videoId)
-                    when (publishResult) {
-                        is ApiResult.Success -> {
-                            _state.value = _state.value.copy(
-                                isUploading = false,
-                                uploadProgress = 1f,
-                                uploadSuccess = true
-                            )
-                        }
-                        is ApiResult.Error -> {
-                            // Upload succeeded but publish failed — video is in DRAFT
-                            _state.value = _state.value.copy(
-                                isUploading = false,
-                                uploadProgress = 1f,
-                                uploadSuccess = true,
-                                error = "Uploaded but publish failed: ${publishResult.message}"
-                            )
-                        }
-                        is ApiResult.NetworkError -> {
-                            _state.value = _state.value.copy(
-                                isUploading = false,
-                                error = "Network error during publish: ${publishResult.throwable.message}"
-                            )
-                        }
-                    }
+                    // The server auto-routes: LICENSED_CREATOR → published,
+                    // everyone else → submitted for moderation review.
+                    val isPending = uploadResult.data.status == "PENDING_REVIEW"
+                    _state.value = _state.value.copy(
+                        isUploading = false,
+                        uploadProgress = 1f,
+                        uploadSuccess = true,
+                        pendingReview = isPending
+                    )
                 }
                 is ApiResult.Error -> {
                     _state.value = _state.value.copy(

@@ -18,10 +18,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,13 +53,13 @@ import com.cognia.app.ui.theme.NeonViolet
 import com.cognia.app.ui.theme.SurfaceDarkCard
 
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel) {
+fun ProfileScreen(viewModel: ProfileViewModel, onLogout: () -> Unit = {}, onNavigateToModeration: () -> Unit = {}) {
     val state by viewModel.state.collectAsState()
 
     when {
         state.isLoading -> LoadingContent()
         state.error != null -> ErrorContent(error = state.error!!, onRetry = viewModel::retry)
-        else -> ProfileContent(state = state)
+        else -> ProfileContent(state = state, onLogout = onLogout, onNavigateToModeration = onNavigateToModeration)
     }
 }
 
@@ -92,7 +95,7 @@ private fun ErrorContent(error: String, onRetry: () -> Unit) {
 }
 
 @Composable
-private fun ProfileContent(state: ProfileUiState) {
+private fun ProfileContent(state: ProfileUiState, onLogout: () -> Unit, onNavigateToModeration: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -277,6 +280,70 @@ private fun ProfileContent(state: ProfileUiState) {
                     )
                 }
             }
+        }
+
+        // Admin-only: Moderation Dashboard button
+        if (state.role == "ADMIN") {
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = onNavigateToModeration,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .height(48.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = NeonPurple,
+                    contentColor = Color.White,
+                ),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AdminPanelSettings,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Moderation Dashboard",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Logout button
+        OutlinedButton(
+            onClick = onLogout,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .height(48.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.error,
+            ),
+            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                brush = Brush.linearGradient(
+                    listOf(
+                        MaterialTheme.colorScheme.error.copy(alpha = 0.5f),
+                        MaterialTheme.colorScheme.error.copy(alpha = 0.3f),
+                    )
+                )
+            ),
+        ) {
+            Icon(
+                imageVector = Icons.Default.ExitToApp,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                "Log Out",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
         }
 
         Spacer(modifier = Modifier.height(32.dp))

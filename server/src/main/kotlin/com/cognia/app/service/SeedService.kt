@@ -16,9 +16,13 @@ import kotlinx.datetime.toLocalDateTime
 class SeedService {
 
     fun seedDevData() {
-        // Only seed if no users exist yet
+        // Always ensure the test creator account exists, even if other users are present
+        ensureTestCreator()
+
+        // Only seed the rest of the demo data if no users existed before
         val userCount = transaction { UsersTable.selectAll().count() }
-        if (userCount > 0L) return
+        // The test creator counts as 1 user, so check > 1 (more users means seed already ran or user registered)
+        if (userCount > 1L) return
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC).toString()
         val passwordHash = BCrypt.hashpw("password123", BCrypt.gensalt())
@@ -369,4 +373,41 @@ class SeedService {
         val displayName: String,
         val role: String
     )
+
+    /**
+     * Always creates the test creator user if it doesn't already exist.
+     * This ensures a LICENSED_CREATOR account is available for upload testing,
+     * even when the main seed was skipped because other users were registered.
+     */
+    private fun ensureTestCreator() {
+        val testEmail = "testcreator@cognia.dev"
+        val exists = transaction {
+            UsersTable.selectAll().where { UsersTable.email eq testEmail }.count() > 0
+        }
+        if (exists) return
+
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC).toString()
+        val passwordHash = BCrypt.hashpw("password123", BCrypt.gensalt())
+        val testCreatorId = "seed-test-creator-001"
+
+        transaction {
+            UsersTable.insert {
+                it[id] = testCreatorId
+                it[email] = testEmail
+                it[UsersTable.passwordHash] = passwordHash
+                it[displayName] = "Test Creator"
+                it[role] = "LICENSED_CREATOR"
+                it[authProvider] = "EMAIL"
+                it[createdAt] = now
+                it[updatedAt] = now
+            }
+            UserProfilesTable.insert {
+                it[userId] = testCreatorId
+                it[level] = 5
+                it[totalPoints] = 500
+                it[selfDescription] = "Licensed test creator for video upload testing"
+            }
+        }
+        println("SeedService: Created test creator account ($testEmail) with LICENSED_CREATOR role")
+    }
 }

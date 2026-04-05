@@ -1,5 +1,9 @@
 package com.cognia.app.plugins
 
+import com.cognia.app.service.EmailAlreadyExistsException
+import com.cognia.app.service.InvalidCredentialsException
+import com.cognia.app.service.InvalidRefreshTokenException
+import com.cognia.app.service.OAuthVerificationException
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.statuspages.*
@@ -21,24 +25,60 @@ private val errorJson = Json {
 
 fun Application.configureStatusPages() {
     install(StatusPages) {
-        status(HttpStatusCode.BadRequest) { call, status ->
-            call.respondJsonError(status, "BAD_REQUEST", "Bad request")
+        // ── Auth exceptions ─────────────────────────────────────────
+        exception<InvalidCredentialsException> { call, cause ->
+            call.respondJsonError(
+                HttpStatusCode.Unauthorized,
+                "INVALID_CREDENTIALS",
+                cause.message ?: "Invalid email or password"
+            )
         }
-        status(HttpStatusCode.Unauthorized) { call, status ->
-            call.respondJsonError(status, "UNAUTHORIZED", "Authentication required")
+        exception<EmailAlreadyExistsException> { call, cause ->
+            call.respondJsonError(
+                HttpStatusCode.Conflict,
+                "EMAIL_EXISTS",
+                cause.message ?: "Email already in use"
+            )
         }
-        status(HttpStatusCode.Forbidden) { call, status ->
-            call.respondJsonError(status, "FORBIDDEN", "Access denied")
+        exception<InvalidRefreshTokenException> { call, cause ->
+            call.respondJsonError(
+                HttpStatusCode.Unauthorized,
+                "INVALID_REFRESH_TOKEN",
+                cause.message ?: "Invalid or expired refresh token"
+            )
         }
+        exception<OAuthVerificationException> { call, cause ->
+            call.respondJsonError(
+                HttpStatusCode.Unauthorized,
+                "OAUTH_VERIFICATION_FAILED",
+                cause.message ?: "Token verification failed"
+            )
+        }
+
+        // ── Validation errors ───────────────────────────────────────
+        exception<IllegalArgumentException> { call, cause ->
+            call.respondJsonError(
+                HttpStatusCode.BadRequest,
+                "BAD_REQUEST",
+                cause.message ?: "Invalid request"
+            )
+        }
+
+        // Request body deserialization failures
+        exception<io.ktor.server.plugins.BadRequestException> { call, cause ->
+            call.respondJsonError(
+                HttpStatusCode.BadRequest,
+                "BAD_REQUEST",
+                cause.message ?: "Malformed request body"
+            )
+        }
+
+        // ── Fallback for unmatched routes ───────────────────────────
         status(HttpStatusCode.NotFound) { call, status ->
             call.respondJsonError(status, "NOT_FOUND", "Resource not found")
         }
-        status(HttpStatusCode.Conflict) { call, status ->
-            call.respondJsonError(status, "CONFLICT", "Resource conflict")
-        }
-        status(HttpStatusCode.InternalServerError) { call, status ->
-            call.respondJsonError(status, "INTERNAL_SERVER_ERROR", "Internal server error")
-        }
+
+        // ── Generic fallback ────────────────────────────────────────
         exception<Throwable> { call, cause ->
             call.application.environment.log.error("Unhandled exception", cause)
             call.respondJsonError(

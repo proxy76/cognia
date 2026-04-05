@@ -84,6 +84,7 @@ fun UploadScreen(viewModel: UploadViewModel) {
         if (state.uploadSuccess) {
             SuccessContent(
                 onCreateAnother = { viewModel.clearState() },
+                pendingReview = state.pendingReview,
                 modifier = Modifier.padding(paddingValues)
             )
         } else {
@@ -98,7 +99,7 @@ fun UploadScreen(viewModel: UploadViewModel) {
 }
 
 @Composable
-private fun SuccessContent(onCreateAnother: () -> Unit, modifier: Modifier = Modifier) {
+private fun SuccessContent(onCreateAnother: () -> Unit, pendingReview: Boolean = false, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -112,14 +113,17 @@ private fun SuccessContent(onCreateAnother: () -> Unit, modifier: Modifier = Mod
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Video uploaded!",
+            text = if (pendingReview) "Video submitted!" else "Video uploaded!",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Your video has been published and is now in the feed!",
+            text = if (pendingReview)
+                "Your video has been submitted for review. An admin will approve it before it goes live."
+            else
+                "Your video has been published and is now in the feed!",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center

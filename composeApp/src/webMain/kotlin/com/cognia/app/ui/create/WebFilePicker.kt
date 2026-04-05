@@ -5,7 +5,8 @@ import org.w3c.dom.HTMLInputElement
 import org.w3c.files.FileReader
 import org.w3c.files.get
 import org.khronos.webgl.ArrayBuffer
-import org.khronos.webgl.Int8Array
+import org.khronos.webgl.Uint8Array
+import org.khronos.webgl.get
 
 /**
  * Web file picker implementation using the HTML `<input type="file">` element.
@@ -24,7 +25,8 @@ class WebFilePicker : PlatformFilePicker {
                 val reader = FileReader()
                 reader.onload = {
                     val arrayBuffer = reader.result as ArrayBuffer
-                    val byteArray = Int8Array(arrayBuffer).unsafeCast<ByteArray>()
+                    val uint8 = Uint8Array(arrayBuffer)
+                    val byteArray = ByteArray(uint8.length) { i -> uint8[i].toByte() }
                     onResult(FilePickerResult(file.name, byteArray))
                     document.body?.removeChild(input)
                     Unit

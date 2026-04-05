@@ -5,7 +5,6 @@ import com.cognia.app.dto.auth.GoogleOAuthRequest
 import com.cognia.app.service.AppleTokenVerifier
 import com.cognia.app.service.GoogleTokenVerifier
 import com.cognia.app.service.OAuthService
-import com.cognia.app.service.OAuthVerificationException
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -19,31 +18,19 @@ fun Route.oauthRoutes() {
 
     route("/api/v1/auth/oauth") {
         post("/google") {
-            try {
-                val request = call.receive<GoogleOAuthRequest>()
-                val response = oauthService.authenticateWithGoogle(request.idToken, googleTokenVerifier)
-                call.respond(HttpStatusCode.OK, response)
-            } catch (e: OAuthVerificationException) {
-                call.respond(HttpStatusCode.Unauthorized, ErrorBody(e.message ?: "Token verification failed"))
-            } catch (e: IllegalArgumentException) {
-                call.respond(HttpStatusCode.BadRequest, ErrorBody(e.message ?: "Invalid request"))
-            }
+            val request = call.receive<GoogleOAuthRequest>()
+            val response = oauthService.authenticateWithGoogle(request.idToken, googleTokenVerifier)
+            call.respond(HttpStatusCode.OK, response)
         }
 
         post("/apple") {
-            try {
-                val request = call.receive<AppleOAuthRequest>()
-                val response = oauthService.authenticateWithApple(
-                    request.identityToken,
-                    request.authorizationCode,
-                    appleTokenVerifier
-                )
-                call.respond(HttpStatusCode.OK, response)
-            } catch (e: OAuthVerificationException) {
-                call.respond(HttpStatusCode.Unauthorized, ErrorBody(e.message ?: "Token verification failed"))
-            } catch (e: IllegalArgumentException) {
-                call.respond(HttpStatusCode.BadRequest, ErrorBody(e.message ?: "Invalid request"))
-            }
+            val request = call.receive<AppleOAuthRequest>()
+            val response = oauthService.authenticateWithApple(
+                request.identityToken,
+                request.authorizationCode,
+                appleTokenVerifier
+            )
+            call.respond(HttpStatusCode.OK, response)
         }
     }
 }
